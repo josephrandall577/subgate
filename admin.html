@@ -1,0 +1,1176 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="icon" href="data:," />
+    <title>管理后台</title>
+    <style>
+      :root {
+        --bg: #10141a;
+        --card: #1a2029;
+        --bd: #2a3340;
+        --fg: #d7dee8;
+        --dim: #8a97a8;
+        --acc: #4da3ff;
+        --red: #ff6b6b;
+        --green: #51cf66;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          14px/1.5 -apple-system,
+          "PingFang SC",
+          "Microsoft YaHei",
+          sans-serif;
+      }
+      .hidden {
+        display: none !important;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 10px 16px;
+        background: var(--card);
+        border-bottom: 1px solid var(--bd);
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        flex-wrap: wrap;
+      }
+      header .brand {
+        font-weight: 700;
+        font-size: 16px;
+      }
+      nav {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+      }
+      nav button {
+        background: none;
+        border: none;
+        color: var(--dim);
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      nav button.on {
+        background: #243040;
+        color: var(--acc);
+      }
+      main {
+        padding: 16px;
+        max-width: 1280px;
+        margin: 0 auto;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--bd);
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 16px;
+      }
+      .card h3 {
+        margin: 0 0 10px;
+        font-size: 15px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      input,
+      select,
+      textarea {
+        background: #0d1117;
+        border: 1px solid var(--bd);
+        color: var(--fg);
+        border-radius: 6px;
+        padding: 6px 8px;
+        font-size: 13px;
+      }
+      input:focus,
+      textarea:focus {
+        outline: 1px solid var(--acc);
+      }
+      textarea {
+        width: 100%;
+        font-family: ui-monospace, monospace;
+      }
+      button {
+        background: #243040;
+        border: 1px solid var(--bd);
+        color: var(--fg);
+        border-radius: 6px;
+        padding: 6px 12px;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      button:hover {
+        border-color: var(--acc);
+      }
+      button.pri {
+        background: var(--acc);
+        color: #08243f;
+        border-color: var(--acc);
+        font-weight: 600;
+      }
+      button.warn {
+        color: var(--red);
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: wait;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 6px 8px;
+        border-bottom: 1px solid var(--bd);
+        vertical-align: top;
+        word-break: break-all;
+      }
+      th {
+        color: var(--dim);
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      tr:hover td {
+        background: #1e2733;
+      }
+      .dim {
+        color: var(--dim);
+      }
+      .red {
+        color: var(--red);
+      }
+      .green {
+        color: var(--green);
+      }
+      .nowrap {
+        white-space: nowrap;
+      }
+      .tag {
+        display: inline-block;
+        background: #3a2a2a;
+        color: var(--red);
+        border-radius: 4px;
+        padding: 0 6px;
+        font-size: 12px;
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      @media (max-width: 900px) {
+        .grid2 {
+          grid-template-columns: 1fr;
+        }
+      }
+      .center {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+      }
+      #loginForm {
+        width: 300px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .kv {
+        display: grid;
+        grid-template-columns: 160px 1fr;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .kv input,
+      .kv textarea {
+        width: 100%;
+      }
+      .hint {
+        font-size: 12px;
+        color: var(--dim);
+      }
+      .mono {
+        font-family: ui-monospace, monospace;
+      }
+      .tok {
+        cursor: pointer;
+        text-decoration: underline dotted;
+      }
+      .stat {
+        font-size: 20px;
+        font-weight: 700;
+        margin-right: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="login" class="center hidden">
+      <form id="loginForm" class="card">
+        <h2 id="loginTitle" style="margin: 0">管理后台</h2>
+        <input id="lu" placeholder="用户名" autocomplete="username" />
+        <input
+          id="lp"
+          type="password"
+          placeholder="密码"
+          autocomplete="current-password"
+        />
+        <button class="pri">登录</button>
+      </form>
+    </div>
+
+    <div id="app" class="hidden">
+      <header>
+        <span class="brand" id="title">SubGate</span>
+        <nav id="nav">
+          <button data-view="logs" class="on">日志</button>
+          <button data-view="analysis">分析</button>
+          <button data-view="ip">IP名单</button>
+          <button data-view="ua">UA规则</button>
+          <button data-view="token">Token黑名单</button>
+          <button data-view="settings">设置</button>
+        </nav>
+        <span style="flex: 1"></span>
+        <button id="logoutBtn">退出</button>
+      </header>
+      <main>
+        <section id="v-logs">
+          <div class="card">
+            <div class="row">
+              <select id="f_range">
+                <option value="today">今天</option>
+                <option value="all">全部</option>
+              </select>
+              <input id="f_ip" placeholder="IP 包含…" size="14" />
+              <input id="f_status" placeholder="状态码(0=断连)" size="10" />
+              <input id="f_token" placeholder="Token 包含…" size="14" />
+              <input id="f_ua" placeholder="UA 包含…" size="14" />
+              <label><input type="checkbox" id="f_sub" /> 只看订阅请求</label>
+              <button class="pri" id="logQuery">查询</button>
+              <button id="logExport">导出</button>
+              <button id="logImportBtn">导入</button>
+              <input
+                type="file"
+                id="logFile"
+                class="hidden"
+                accept=".jsonl,.log,.txt"
+              />
+              <button class="warn" id="logClean">清理旧日志</button>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>时间</th>
+                  <th>IP</th>
+                  <th>请求</th>
+                  <th>Token</th>
+                  <th>状态</th>
+                  <th>大小</th>
+                  <th>UA</th>
+                  <th>拦截</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="logRows"></tbody>
+            </table>
+            <div class="hint" id="logCount"></div>
+          </div>
+        </section>
+
+        <section id="v-analysis" class="hidden">
+          <div class="card">
+            <span class="stat" id="aTotal">-</span
+            ><span class="dim">今日请求</span>
+            <span class="stat red" id="aBlocked" style="margin-left: 32px"
+              >-</span
+            ><span class="dim">已拦截</span>
+            <button style="float: right" id="aRefresh">刷新</button>
+          </div>
+          <div class="grid2">
+            <div class="card">
+              <h3>Top IP（今日）</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>IP</th>
+                    <th>请求数</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="aTopIP"></tbody>
+              </table>
+            </div>
+            <div class="card">
+              <h3>Top Token（今日）</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Token</th>
+                    <th>请求数</th>
+                  </tr>
+                </thead>
+                <tbody id="aTopToken"></tbody>
+              </table>
+            </div>
+            <div class="card">
+              <h3>可疑UA（被拦截请求中高频）</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>UA</th>
+                    <th>次数</th>
+                  </tr>
+                </thead>
+                <tbody id="aSuspUA"></tbody>
+              </table>
+            </div>
+            <div class="card">
+              <h3>可疑Token（多IP拉取，疑似泄露）</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Token</th>
+                    <th>IP数</th>
+                    <th>请求数</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="aSuspToken"></tbody>
+              </table>
+            </div>
+            <div class="card">
+              <h3>可疑IP（拉取多Token，疑似扫号）</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>IP</th>
+                    <th>Token数</th>
+                    <th>请求数</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="aSuspIP"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="v-ip" class="hidden">
+          <div class="grid2">
+            <div class="card">
+              <h3>
+                IP白名单 <span class="hint">命中直接放行，优先级最高</span>
+              </h3>
+              <div class="row">
+                <input id="wl_v" placeholder="IP 或 CIDR" /><input
+                  id="wl_r"
+                  placeholder="备注"
+                  size="10"
+                />
+                <button
+                  class="pri"
+                  data-addlist="ip_whitelist"
+                  data-v="wl_v"
+                  data-r="wl_r"
+                >
+                  添加
+                </button>
+                <button data-export="ip_whitelist">导出</button>
+              </div>
+              <textarea
+                id="wl_imp"
+                rows="3"
+                placeholder='批量导入：每行一条，"IP[,备注]"'
+              ></textarea>
+              <div class="row" style="margin-top: 6px">
+                <button data-implist="ip_whitelist" data-t="wl_imp">
+                  批量导入
+                </button>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>IP/CIDR</th>
+                    <th>备注</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="wlRows"></tbody>
+              </table>
+            </div>
+            <div class="card">
+              <h3>IP黑名单</h3>
+              <div class="row">
+                <input id="bl_v" placeholder="IP 或 CIDR" /><input
+                  id="bl_r"
+                  placeholder="备注"
+                  size="10"
+                />
+                <button
+                  class="pri"
+                  data-addlist="ip_blacklist"
+                  data-v="bl_v"
+                  data-r="bl_r"
+                >
+                  添加
+                </button>
+                <button data-export="ip_blacklist">导出</button>
+              </div>
+              <textarea
+                id="bl_imp"
+                rows="3"
+                placeholder='批量导入：每行一条，"IP[,备注]"'
+              ></textarea>
+              <div class="row" style="margin-top: 6px">
+                <button data-implist="ip_blacklist" data-t="bl_imp">
+                  批量导入
+                </button>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>IP/CIDR</th>
+                    <th>备注</th>
+                    <th>云厂商</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="blRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="v-ua" class="hidden">
+          <div class="grid2">
+            <div class="card">
+              <h3>
+                UA封禁关键词 <span class="hint">子串匹配，大小写不敏感</span>
+              </h3>
+              <div class="row">
+                <input id="ub_v" placeholder="关键词" /><input
+                  id="ub_r"
+                  placeholder="备注"
+                  size="10"
+                />
+                <button
+                  class="pri"
+                  data-addlist="ua_ban"
+                  data-v="ub_v"
+                  data-r="ub_r"
+                >
+                  添加
+                </button>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>关键词</th>
+                    <th>备注</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="ubRows"></tbody>
+              </table>
+              <div class="hint">
+                内置规则始终生效：空UA、curl、wget、python、go-http-client、java、libcurl、axios、node-fetch、scrapy、aiohttp
+              </div>
+            </div>
+            <div class="card">
+              <h3>
+                UA白名单关键词
+                <span class="hint">命中则跳过所有UA拦截（含内置规则）</span>
+              </h3>
+              <div class="row">
+                <input id="ua_v" placeholder="关键词" /><input
+                  id="ua_r"
+                  placeholder="备注"
+                  size="10"
+                />
+                <button
+                  class="pri"
+                  data-addlist="ua_allow"
+                  data-v="ua_v"
+                  data-r="ua_r"
+                >
+                  添加
+                </button>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>关键词</th>
+                    <th>备注</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="uaRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="v-token" class="hidden">
+          <div class="card">
+            <h3>
+              Token黑名单
+              <span class="hint"
+                >仅用于监控和从分析统计中排除，不会拦截请求</span
+              >
+            </h3>
+            <div class="row">
+              <input id="tk_v" placeholder="Token" size="30" /><input
+                id="tk_r"
+                placeholder="备注"
+                size="12"
+              />
+              <button
+                class="pri"
+                data-addlist="token_blacklist"
+                data-v="tk_v"
+                data-r="tk_r"
+              >
+                添加
+              </button>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Token</th>
+                  <th>备注</th>
+                  <th>今日拉取（IP × 次数）</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tkRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="v-settings" class="hidden">
+          <div class="card">
+            <h3>系统设置</h3>
+            <div class="kv">
+              <span>上游机场地址</span
+              ><input
+                id="s_upstream"
+                placeholder="https://backend.example.com"
+              />
+            </div>
+            <div class="kv">
+              <span>订阅路径前缀</span><input id="s_sub_path" />
+            </div>
+            <div class="kv">
+              <span>网关监听地址 <span class="hint">改后需重启</span></span
+              ><input id="s_gateway_addr" />
+            </div>
+            <div class="kv">
+              <span>后台监听地址 <span class="hint">改后需重启</span></span
+              ><input id="s_admin_addr" />
+            </div>
+            <div class="kv">
+              <span>后台标题</span><input id="s_panel_title" />
+            </div>
+            <div class="kv">
+              <span
+                >真实IP头
+                <span class="hint">CF隧道用 CF-Connecting-IP</span></span
+              ><input id="s_real_ip_header" />
+            </div>
+            <div class="kv">
+              <span>受信代理网段 <span class="hint">每行一条</span></span
+              ><textarea id="s_trusted" rows="2"></textarea>
+            </div>
+            <div class="kv">
+              <span>限速（次/分钟）</span
+              ><input id="s_rate" type="number" min="1" />
+            </div>
+            <div class="kv">
+              <span>限速突发</span><input id="s_burst" type="number" min="1" />
+            </div>
+            <div class="kv">
+              <span>可疑Token阈值（IP数≥）</span
+              ><input id="s_stok" type="number" min="1" />
+            </div>
+            <div class="kv">
+              <span>可疑IP阈值（Token数≥）</span
+              ><input id="s_sip" type="number" min="1" />
+            </div>
+            <div class="kv">
+              <span>证书监控域名</span
+              ><input id="s_cert" placeholder="sub.example.com" />
+            </div>
+            <div class="kv">
+              <span>云IP数据源模板</span><input id="s_asn" />
+            </div>
+            <div class="kv">
+              <span>后台路径</span><span class="mono" id="s_panel_path"></span>
+            </div>
+            <button class="pri" id="saveSettings">
+              保存设置（名单/上游/UA规则改动立即生效）
+            </button>
+          </div>
+          <div class="card">
+            <h3>修改管理员账号</h3>
+            <div class="kv">
+              <span>用户名</span><input id="p_user" autocomplete="username" />
+            </div>
+            <div class="kv">
+              <span>新密码 <span class="hint">至少8位</span></span
+              ><input id="p_pass" type="password" autocomplete="new-password" />
+            </div>
+            <button id="savePass">修改（改后需重新登录）</button>
+          </div>
+          <div class="card">
+            <h3>
+              云厂商IP库 <span class="hint">每7天自动刷新；失败保留旧数据</span>
+            </h3>
+            <div class="row"><button id="cloudRefresh">立即刷新</button></div>
+            <table>
+              <thead>
+                <tr>
+                  <th>厂商</th>
+                  <th>网段数</th>
+                  <th>更新时间</th>
+                  <th>错误</th>
+                </tr>
+              </thead>
+              <tbody id="cloudRows"></tbody>
+            </table>
+          </div>
+          <div class="card">
+            <h3>SSL证书</h3>
+            <div class="row"><button id="certCheck">查询到期信息</button></div>
+            <div id="certInfo" class="hint"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const $ = (s) => document.querySelector(s);
+      /* DOM 构建（textContent 语义，杜绝注入） */
+      const h = (tag, attrs, ...kids) => {
+        const el = document.createElement(tag);
+        for (const [k, v] of Object.entries(attrs || {}))
+          k === "class" ? (el.className = v) : el.setAttribute(k, v);
+        el.append(
+          ...kids.filter((k) => k !== null && k !== undefined && k !== ""),
+        );
+        return el;
+      };
+      const fill = (sel, rows) => $(sel).replaceChildren(...rows);
+      const fmtTime = (t) =>
+        new Date(t).toLocaleString("zh-CN", { hour12: false });
+
+      async function api(path, body, raw) {
+        const opt = { method: body !== undefined ? "POST" : "GET" };
+        if (body !== undefined) {
+          opt.headers = {
+            "Content-Type": raw ? "text/plain" : "application/json",
+          };
+          opt.body = raw ? body : JSON.stringify(body);
+        }
+        const r = await fetch("api/" + path, opt);
+        if (r.status === 401) {
+          showLogin();
+          throw new Error("未登录");
+        }
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          alert(d.error || "请求失败 " + r.status);
+          throw new Error(d.error || r.status);
+        }
+        return d;
+      }
+
+      function showLogin() {
+        $("#app").classList.add("hidden");
+        $("#login").classList.remove("hidden");
+      }
+      function showApp() {
+        $("#login").classList.add("hidden");
+        $("#app").classList.remove("hidden");
+      }
+
+      $("#loginForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try {
+          await api("login", { user: $("#lu").value, pass: $("#lp").value });
+          boot();
+        } catch {}
+      });
+      $("#logoutBtn").onclick = async () => {
+        try {
+          await api("logout", {});
+        } catch {}
+        showLogin();
+      };
+
+      /* 导航 */
+      $("#nav").addEventListener("click", (e) => {
+        const b = e.target.closest("button[data-view]");
+        if (!b) return;
+        document
+          .querySelectorAll("#nav button")
+          .forEach((x) => x.classList.toggle("on", x === b));
+        document
+          .querySelectorAll("main > section")
+          .forEach((s) => s.classList.add("hidden"));
+        $("#v-" + b.dataset.view).classList.remove("hidden");
+        ({
+          logs: loadLogs,
+          analysis: loadAnalysis,
+          ip: loadLists,
+          ua: loadLists,
+          token: loadLists,
+          settings: loadSettings,
+        })[b.dataset.view]();
+      });
+
+      const tokSpan = (t) =>
+        h(
+          "span",
+          {
+            class: "tok mono",
+            "data-act": "copy",
+            "data-token": t,
+            title: "点击复制",
+          },
+          t,
+        );
+      const banBtn = (ip, label) =>
+        h("button", { "data-act": "ban", "data-ip": ip }, label || "封禁");
+
+      /* ── 日志 ── */
+      async function loadLogs() {
+        const p = new URLSearchParams({
+          range: $("#f_range").value,
+          ip: $("#f_ip").value,
+          status: $("#f_status").value,
+          token: $("#f_token").value,
+          ua: $("#f_ua").value,
+          subonly: $("#f_sub").checked ? "1" : "",
+          limit: 500,
+        });
+        const d = await api("logs?" + p);
+        fill(
+          "#logRows",
+          (d.entries || []).map((e) =>
+            h(
+              "tr",
+              null,
+              h("td", { class: "dim nowrap" }, fmtTime(e.ts)),
+              h("td", { class: "mono" }, e.ip),
+              h("td", { class: "mono" }, e.method + " " + e.path),
+              h("td", null, e.token ? tokSpan(e.token) : ""),
+              h(
+                "td",
+                { class: e.block ? "red" : "" },
+                e.status === 0 ? "断连" : String(e.status),
+              ),
+              h("td", { class: "dim" }, String(e.bytes)),
+              h("td", { class: "dim" }, e.ua),
+              h("td", { class: "red" }, e.block || ""),
+              h("td", null, banBtn(e.ip, "封禁IP")),
+            ),
+          ),
+        );
+        $("#logCount").textContent =
+          `共 ${d.entries?.length || 0} 条（最新在前，最多500条）`;
+      }
+      $("#logQuery").onclick = loadLogs;
+      $("#logExport").onclick = () =>
+        (location = "api/logs/export?range=" + $("#f_range").value);
+      $("#logImportBtn").onclick = () => $("#logFile").click();
+      $("#logFile").onchange = async (e) => {
+        const f = e.target.files[0];
+        if (!f) return;
+        const d = await api("logs/import", await f.text(), true);
+        alert(`导入完成，新增 ${d.added} 条（已去重排序）`);
+        e.target.value = "";
+        loadLogs();
+      };
+      $("#logClean").onclick = async () => {
+        const v = prompt("清理多少天前的日志？", "30");
+        if (!v) return;
+        const d = await api("logs/cleanup", { days: +v });
+        alert(`已删除 ${d.removed} 个日志文件`);
+        loadLogs();
+      };
+
+      /* ── 分析 ── */
+      async function loadAnalysis() {
+        const d = await api("analysis");
+        $("#aTotal").textContent = d.total;
+        $("#aBlocked").textContent = d.blocked;
+        fill(
+          "#aTopIP",
+          (d.top_ips || []).map((x) =>
+            h(
+              "tr",
+              null,
+              h("td", { class: "mono" }, x.key),
+              h("td", null, String(x.count)),
+              h("td", null, banBtn(x.key)),
+            ),
+          ),
+        );
+        fill(
+          "#aTopToken",
+          (d.top_tokens || []).map((x) =>
+            h(
+              "tr",
+              null,
+              h("td", null, tokSpan(x.key)),
+              h("td", null, String(x.count)),
+            ),
+          ),
+        );
+        fill(
+          "#aSuspUA",
+          (d.susp_ua || []).map((x) =>
+            h(
+              "tr",
+              null,
+              h("td", null, x.key || h("span", { class: "dim" }, "(空UA)")),
+              h("td", null, String(x.count)),
+            ),
+          ),
+        );
+        fill(
+          "#aSuspToken",
+          (d.susp_tokens || []).map((x) =>
+            h(
+              "tr",
+              null,
+              h("td", null, tokSpan(x.token)),
+              h("td", null, String(x.ip_count)),
+              h("td", null, String(x.reqs)),
+              h(
+                "td",
+                null,
+                h(
+                  "button",
+                  { "data-act": "blt", "data-token": x.token },
+                  "加入Token黑名单",
+                ),
+              ),
+            ),
+          ),
+        );
+        fill(
+          "#aSuspIP",
+          (d.susp_ips || []).map((x) =>
+            h(
+              "tr",
+              null,
+              h("td", { class: "mono" }, x.ip),
+              h("td", null, String(x.token_count)),
+              h("td", null, String(x.reqs)),
+              h("td", null, banBtn(x.ip)),
+            ),
+          ),
+        );
+      }
+      $("#aRefresh").onclick = loadAnalysis;
+
+      /* ── 名单 ── */
+      async function loadLists() {
+        const d = await api("lists");
+        const delBtn = (list, v) =>
+          h(
+            "button",
+            {
+              class: "warn",
+              "data-act": "del",
+              "data-list": list,
+              "data-value": v,
+            },
+            "删除",
+          );
+        fill(
+          "#wlRows",
+          (d.ip_whitelist || []).map((x) =>
+            h(
+              "tr",
+              null,
+              h("td", { class: "mono" }, x.value),
+              h("td", { class: "dim" }, x.remark || ""),
+              h("td", null, delBtn("ip_whitelist", x.value)),
+            ),
+          ),
+        );
+        fill(
+          "#blRows",
+          (d.ip_blacklist || []).map((x) =>
+            h(
+              "tr",
+              null,
+              h("td", { class: "mono" }, x.value),
+              h("td", { class: "dim" }, x.remark || ""),
+              h(
+                "td",
+                null,
+                x.cloud ? h("span", { class: "tag" }, x.cloud) : "",
+              ),
+              h("td", null, delBtn("ip_blacklist", x.value)),
+            ),
+          ),
+        );
+        fill(
+          "#ubRows",
+          (d.ua_ban || []).map((x) =>
+            h(
+              "tr",
+              null,
+              h("td", null, x.value),
+              h("td", { class: "dim" }, x.remark || ""),
+              h("td", null, delBtn("ua_ban", x.value)),
+            ),
+          ),
+        );
+        fill(
+          "#uaRows",
+          (d.ua_allow || []).map((x) =>
+            h(
+              "tr",
+              null,
+              h("td", null, x.value),
+              h("td", { class: "dim" }, x.remark || ""),
+              h("td", null, delBtn("ua_allow", x.value)),
+            ),
+          ),
+        );
+        fill(
+          "#tkRows",
+          (d.token_blacklist || []).map((x) =>
+            h(
+              "tr",
+              null,
+              h("td", null, tokSpan(x.value)),
+              h("td", { class: "dim" }, x.remark || ""),
+              h(
+                "td",
+                { class: "dim" },
+                (x.stats || [])
+                  .map((s) => `${s.key} × ${s.count}`)
+                  .join("、") || "今日无拉取",
+              ),
+              h("td", null, delBtn("token_blacklist", x.value)),
+            ),
+          ),
+        );
+      }
+
+      /* 通用按钮：添加/导入/导出/删除/封禁/复制 */
+      document.addEventListener("click", async (e) => {
+        const b = e.target.closest(
+          "[data-addlist],[data-implist],[data-export],[data-act]",
+        );
+        if (!b) return;
+        if (b.dataset.addlist) {
+          const v = $("#" + b.dataset.v),
+            r = $("#" + b.dataset.r);
+          if (!v.value.trim()) return;
+          await api("lists/add", {
+            list: b.dataset.addlist,
+            value: v.value,
+            remark: r.value,
+          });
+          v.value = r.value = "";
+          loadLists();
+        } else if (b.dataset.implist) {
+          const t = $("#" + b.dataset.t);
+          if (!t.value.trim()) return;
+          const d = await api("lists/import", {
+            list: b.dataset.implist,
+            text: t.value,
+          });
+          alert(`导入 ${d.added} 条，跳过 ${d.skipped} 条`);
+          t.value = "";
+          loadLists();
+        } else if (b.dataset.export) {
+          location = "api/lists/export?list=" + b.dataset.export;
+        } else if (b.dataset.act === "del") {
+          if (!confirm(`删除 ${b.dataset.value} ?`)) return;
+          await api("lists/del", {
+            list: b.dataset.list,
+            value: b.dataset.value,
+          });
+          loadLists();
+        } else if (b.dataset.act === "ban") {
+          if (!confirm(`封禁 IP ${b.dataset.ip} ?`)) return;
+          await api("lists/add", {
+            list: "ip_blacklist",
+            value: b.dataset.ip,
+            remark: "手动封禁 " + new Date().toLocaleDateString("zh-CN"),
+          });
+          alert("已封禁，立即生效");
+        } else if (b.dataset.act === "blt") {
+          await api("lists/add", {
+            list: "token_blacklist",
+            value: b.dataset.token,
+            remark: "可疑Token " + new Date().toLocaleDateString("zh-CN"),
+          });
+          alert("已加入Token黑名单（仅监控，不拦截）");
+        } else if (b.dataset.act === "copy") {
+          try {
+            await navigator.clipboard.writeText(b.dataset.token);
+            alert("已复制");
+          } catch {
+            prompt("复制Token：", b.dataset.token);
+          }
+        }
+      });
+
+      /* ── 设置 ── */
+      async function loadSettings() {
+        const d = await api("settings");
+        $("#s_upstream").value = d.upstream;
+        $("#s_sub_path").value = d.sub_path;
+        $("#s_gateway_addr").value = d.gateway_addr;
+        $("#s_admin_addr").value = d.admin_addr;
+        $("#s_panel_title").value = d.panel_title;
+        $("#s_real_ip_header").value = d.real_ip_header;
+        $("#s_trusted").value = (d.trusted_proxies || []).join("\n");
+        $("#s_rate").value = d.rate_per_min;
+        $("#s_burst").value = d.rate_burst;
+        $("#s_stok").value = d.susp_token_ips;
+        $("#s_sip").value = d.susp_ip_tokens;
+        $("#s_cert").value = d.cert_domain;
+        $("#s_asn").value = d.asn_url_template;
+        $("#s_panel_path").textContent = "/" + d.panel_path + "/";
+        $("#p_user").value = d.user;
+        loadCloud();
+      }
+      $("#saveSettings").onclick = async () => {
+        const d = await api("settings", {
+          upstream: $("#s_upstream").value,
+          sub_path: $("#s_sub_path").value,
+          gateway_addr: $("#s_gateway_addr").value,
+          admin_addr: $("#s_admin_addr").value,
+          panel_title: $("#s_panel_title").value,
+          real_ip_header: $("#s_real_ip_header").value,
+          trusted_proxies: $("#s_trusted")
+            .value.split("\n")
+            .map((x) => x.trim())
+            .filter(Boolean),
+          rate_per_min: +$("#s_rate").value,
+          rate_burst: +$("#s_burst").value,
+          susp_token_ips: +$("#s_stok").value,
+          susp_ip_tokens: +$("#s_sip").value,
+          cert_domain: $("#s_cert").value,
+          asn_url_template: $("#s_asn").value,
+        });
+        alert(
+          d.restart_needed
+            ? "已保存。监听地址有改动，需重启进程才生效！"
+            : "已保存，立即生效",
+        );
+        loadMeta();
+      };
+      $("#savePass").onclick = async () => {
+        await api("password", {
+          user: $("#p_user").value,
+          pass: $("#p_pass").value,
+        });
+        alert("已修改，请重新登录");
+        showLogin();
+      };
+
+      async function loadCloud() {
+        const d = await api("cloudips");
+        fill(
+          "#cloudRows",
+          (d.providers || []).map((p) =>
+            h(
+              "tr",
+              null,
+              h("td", null, p.name),
+              h("td", null, String(p.count)),
+              h(
+                "td",
+                { class: "dim" },
+                p.fetched && !p.fetched.startsWith("0001")
+                  ? fmtTime(p.fetched)
+                  : "未获取",
+              ),
+              h("td", { class: "red" }, p.err || ""),
+            ),
+          ),
+        );
+      }
+      $("#cloudRefresh").onclick = async (e) => {
+        e.target.disabled = true;
+        e.target.textContent = "刷新中…";
+        try {
+          await api("cloudips/refresh", {});
+          await loadCloud();
+        } finally {
+          e.target.disabled = false;
+          e.target.textContent = "立即刷新";
+        }
+      };
+      $("#certCheck").onclick = async () => {
+        const d = await api("certinfo");
+        $("#certInfo").replaceChildren(
+          ...(d.error
+            ? [h("span", { class: "red" }, d.error)]
+            : [
+                "域名 ",
+                h("b", null, d.domain),
+                ` · 颁发者 ${d.issuer} · 到期 ${new Date(d.not_after).toLocaleDateString("zh-CN")} · 剩余 `,
+                h(
+                  "b",
+                  { class: d.days_left < 15 ? "red" : "green" },
+                  String(d.days_left),
+                ),
+                " 天",
+              ]),
+        );
+      };
+
+      async function loadMeta() {
+        try {
+          const m = await fetch("api/meta").then((r) => r.json());
+          document.title = m.title;
+          $("#title").textContent = m.title;
+          $("#loginTitle").textContent = m.title;
+        } catch {}
+      }
+      async function boot() {
+        showApp();
+        loadLogs();
+      }
+      (async () => {
+        loadMeta();
+        try {
+          await api("settings");
+          boot();
+        } catch {}
+      })();
+    </script>
+  </body>
+</html>
