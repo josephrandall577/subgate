@@ -26,7 +26,7 @@ SELFDIR=""
 [ -n "$SELF" ] && [ -f "$SELF" ] && SELFDIR=$(cd "$(dirname "$SELF")" && pwd)
 
 if [ -n "$SELFDIR" ] && [ -d "$SELFDIR/.git" ] && grep -q '^module subgate' "$SELFDIR/go.mod" 2>/dev/null; then
-  echo "== 本地源码目录 $SELFDIR，更新代码…"
+  echo "== 本地源码目录 ${SELFDIR}，更新代码…"
   cd "$SELFDIR"
   git pull --ff-only || echo "(git pull 跳过，使用当前工作区代码)"
 elif [ -d "$DIR/.git" ]; then
@@ -121,9 +121,10 @@ EOF
   systemctl enable --now subgate
   systemctl restart subgate
 else
-  pkill -f "$(pwd)/subgate -data" 2>/dev/null || true
+  # 匹配不带路径前缀，以兼容旧版本用 ./subgate 启动的残留进程（单主机单实例部署）
+  pkill -f 'subgate -data' 2>/dev/null || true
   sleep 0.5
-  nohup "$(pwd)/subgate" -data "$DATA" >>subgate.log 2>&1 &   # 绝对路径启动，上面 pkill 才能匹配到
+  nohup "$(pwd)/subgate" -data "$DATA" >>subgate.log 2>&1 &
 fi
 
 sleep 1.5
