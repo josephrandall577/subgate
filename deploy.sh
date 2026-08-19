@@ -129,7 +129,7 @@ EOF
   systemctl restart subgate
 else
   # 匹配不带路径前缀，以兼容旧版本用 ./subgate 启动的残留进程（单主机单实例部署）
-  pkill -f 'subgate -data' 2>/dev/null || true
+  pkill -f '[/.]subgate -data' 2>/dev/null || true
   sleep 0.5
   nohup "$(pwd)/subgate" -data "$DATA" >>subgate.log 2>&1 &
 fi
