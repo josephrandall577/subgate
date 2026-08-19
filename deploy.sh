@@ -1,17 +1,44 @@
 #!/usr/bin/env bash
-# SubGate 一键部署向导：交互收集配置 → 构建 → 生成机密 → 启动 → 打印+落盘访问信息
+# SubGate 一键部署：从 GitHub 获取源码 → 交互配置 → 构建 → 生成机密 → 启动 → 打印+落盘访问信息
+#
+#   curl -fsSL https://raw.githubusercontent.com/josephrandall577/subgate/main/deploy.sh | bash
+#   或在已 clone 的目录内直接 ./deploy.sh（会先 git pull 更新）
+#
+# 可用环境变量覆盖：
+#   SUBGATE_REPO  源码仓库地址（默认本项目）
+#   SUBGATE_DIR   源码存放目录（默认 ~/subgate）
+#   SUBGATE_REF   分支或标签（默认 main）
 set -euo pipefail
-cd "$(dirname "$0")"
+
+REPO=${SUBGATE_REPO:-https://github.com/josephrandall577/subgate.git}
+REF=${SUBGATE_REF:-main}
+DIR=${SUBGATE_DIR:-$HOME/subgate}
 DATA=data
 
-command -v go >/dev/null || {
-  echo "需要 Go 工具链 (https://go.dev/dl/)"
-  exit 1
-}
+command -v git >/dev/null || { echo "需要 git"; exit 1; }
+command -v go  >/dev/null || { echo "需要 Go 工具链 (https://go.dev/dl/)"; exit 1; }
 
+# ── 获取源码 ──
+# 已在仓库内（本地 clone 执行）→ 原地更新；否则 clone/更新到 $DIR 再进去。
+if [ -d .git ] && [ -f go.mod ] && grep -q '^module subgate' go.mod 2>/dev/null; then
+  echo "== 在源码目录内，更新代码…"
+  git pull --ff-only || echo "(git pull 跳过，使用当前工作区代码)"
+elif [ -d "$DIR/.git" ]; then
+  echo "== 更新已有源码 $DIR"
+  git -C "$DIR" fetch --depth 1 origin "$REF"
+  git -C "$DIR" reset --hard FETCH_HEAD   # data/ 已 gitignore，不受影响
+  cd "$DIR"
+else
+  echo "== 从 $REPO 获取源码到 $DIR"
+  git clone --depth 1 --branch "$REF" "$REPO" "$DIR"
+  cd "$DIR"
+fi
+echo "   代码版本: $(git rev-parse --short HEAD)"
+
+# curl|bash 时 stdin 是脚本本身，交互输入必须读 /dev/tty；无 tty 则全部取默认值
 ask() {
-  local v
-  read -rp "$1 [$2]: " v
+  local v=""
+  if [ -r /dev/tty ]; then read -rp "$1 [$2]: " v </dev/tty || true; else echo "  ($1 → 用默认 $2)" >&2; fi
   echo "${v:-$2}"
 }
 
@@ -35,7 +62,7 @@ if [ ! -f "$DATA/secrets.json" ]; then
   NEW_SECRET=1
 else
   echo "已存在 secrets.json：保留原密码与后台路径"
-  PASS="(沿用原密码，见首次部署记录)"
+  PASS="(沿用原密码，见 $DATA/deploy-info.txt)"
   PANEL=$(grep -o '"panel_path": *"[^"]*"' "$DATA/secrets.json" | sed 's/.*"\([^"]*\)"$/\1/')
 fi
 
@@ -87,31 +114,36 @@ EOF
   systemctl enable --now subgate
   systemctl restart subgate
 else
-  pkill -f "$(pwd)/subgate -data" 2>/dev/null || pkill -f './subgate -data' 2>/dev/null || true
+  pkill -f "$(pwd)/subgate -data" 2>/dev/null || true
   sleep 0.5
   nohup ./subgate -data "$DATA" >>subgate.log 2>&1 &
 fi
 
-sleep 1
+sleep 1.5
 if curl -sf -o /dev/null "http://127.0.0.1:$ADMINPORT/$PANEL/"; then
   echo "健康检查: 管理后台 OK"
 else
-  echo "警告: 管理后台无响应，请检查日志 (journalctl -u subgate 或 subgate.log)"
+  echo "警告: 管理后台无响应，请检查日志 (journalctl -u subgate 或 $(pwd)/subgate.log)"
 fi
 
-INFO=$(
-  cat <<EOF
+INFO=$(cat <<EOF
 ========================================
 SubGate 部署完成 $(date '+%F %T')
+源码目录:  $(pwd)  (版本 $(git rev-parse --short HEAD))
 网关入口:  http://<本机>:$GWPORT   (Cloudflare Tunnel 指向 http://localhost:$GWPORT)
 订阅路径:  $SUBPATH
 管理后台:  http://127.0.0.1:$ADMINPORT/$PANEL/
 管理账号:  admin
 管理密码:  $PASS
 提示: Cloudflare Zero Trust 中真实IP头保持 CF-Connecting-IP 即可
+更新: cd $(pwd) && ./update.sh
 ========================================
 EOF
 )
 echo "$INFO"
-[ "$NEW_SECRET" = 1 ] && echo "$INFO" >"$DATA/deploy-info.txt" && chmod 600 "$DATA/deploy-info.txt" && echo "(访问信息已保存到 $DATA/deploy-info.txt)"
+if [ "$NEW_SECRET" = 1 ]; then
+  echo "$INFO" >"$DATA/deploy-info.txt"
+  chmod 600 "$DATA/deploy-info.txt"
+  echo "(访问信息已保存到 $(pwd)/$DATA/deploy-info.txt)"
+fi
 exit 0

@@ -4,10 +4,16 @@
 
 ## 快速开始
 
+服务器上一条命令（从 GitHub 取源码 → 交互配置 → 构建 → 启动 → 打印访问信息）：
+
 ```bash
-./deploy.sh    # 交互式部署向导（生成随机密码与后台路径，落盘 data/deploy-info.txt）
-./update.sh    # 更新：拉代码→重建→重启→健康检查，data/ 不受影响
+curl -fsSL https://raw.githubusercontent.com/josephrandall577/subgate/main/deploy.sh | bash
 ```
+
+源码默认落在 `~/subgate`（可用 `SUBGATE_DIR=/opt/subgate` 覆盖；`SUBGATE_REF` 指定分支/标签）。
+随机管理员密码与后台路径打印在末尾并存入 `data/deploy-info.txt`。
+
+后续更新：`cd ~/subgate && ./update.sh`（拉新代码→重建→重启→健康检查，`data/` 内机密与配置保留）。
 
 手动运行：`go build -o subgate . && ./subgate -data data`（首次启动自动生成管理员密码并打印）。
 
