@@ -19,9 +19,15 @@ command -v git >/dev/null || { echo "需要 git"; exit 1; }
 command -v go  >/dev/null || { echo "需要 Go 工具链 (https://go.dev/dl/)"; exit 1; }
 
 # ── 获取源码 ──
-# 已在仓库内（本地 clone 执行）→ 原地更新；否则 clone/更新到 $DIR 再进去。
-if [ -d .git ] && [ -f go.mod ] && grep -q '^module subgate' go.mod 2>/dev/null; then
-  echo "== 在源码目录内，更新代码…"
+# 以本地文件方式执行且自身就在仓库里 → 原地更新；
+# curl|bash（无脚本文件）→ 始终 clone/更新到 $DIR，不受当前目录影响。
+SELF=${BASH_SOURCE[0]:-}
+SELFDIR=""
+[ -n "$SELF" ] && [ -f "$SELF" ] && SELFDIR=$(cd "$(dirname "$SELF")" && pwd)
+
+if [ -n "$SELFDIR" ] && [ -d "$SELFDIR/.git" ] && grep -q '^module subgate' "$SELFDIR/go.mod" 2>/dev/null; then
+  echo "== 本地源码目录 $SELFDIR，更新代码…"
+  cd "$SELFDIR"
   git pull --ff-only || echo "(git pull 跳过，使用当前工作区代码)"
 elif [ -d "$DIR/.git" ]; then
   echo "== 更新已有源码 $DIR"
@@ -35,10 +41,11 @@ else
 fi
 echo "   代码版本: $(git rev-parse --short HEAD)"
 
-# curl|bash 时 stdin 是脚本本身，交互输入必须读 /dev/tty；无 tty 则全部取默认值
+# curl|bash 时 stdin 是脚本本身，交互输入必须读 /dev/tty；存在但不可用时也要降级
+if { : </dev/tty; } 2>/dev/null; then TTY=/dev/tty; else TTY=""; echo "== 非交互环境：所有选项使用默认值（部署后可在后台设置页修正）"; fi
 ask() {
   local v=""
-  if [ -r /dev/tty ]; then read -rp "$1 [$2]: " v </dev/tty || true; else echo "  ($1 → 用默认 $2)" >&2; fi
+  [ -n "$TTY" ] && { read -rp "$1 [$2]: " v <"$TTY" || true; }
   echo "${v:-$2}"
 }
 
@@ -116,7 +123,7 @@ EOF
 else
   pkill -f "$(pwd)/subgate -data" 2>/dev/null || true
   sleep 0.5
-  nohup ./subgate -data "$DATA" >>subgate.log 2>&1 &
+  nohup "$(pwd)/subgate" -data "$DATA" >>subgate.log 2>&1 &   # 绝对路径启动，上面 pkill 才能匹配到
 fi
 
 sleep 1.5

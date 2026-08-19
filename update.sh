@@ -22,7 +22,7 @@ if systemctl is-active subgate >/dev/null 2>&1; then
 else
   pkill -f "$(pwd)/subgate -data" 2>/dev/null || true
   sleep 0.5
-  nohup ./subgate -data "$DATA" >>subgate.log 2>&1 &
+  nohup "$(pwd)/subgate" -data "$DATA" >>subgate.log 2>&1 &   # 绝对路径启动，上面 pkill 才能匹配到
 fi
 
 sleep 1.5
