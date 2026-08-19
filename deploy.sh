@@ -21,25 +21,32 @@ command -v go  >/dev/null || { echo "需要 Go 工具链 (https://go.dev/dl/)"; 
 # ── 获取源码 ──
 # 以本地文件方式执行且自身就在仓库里 → 原地更新；
 # curl|bash（无脚本文件）→ 始终 clone/更新到 $DIR，不受当前目录影响。
-SELF=${BASH_SOURCE[0]:-}
-SELFDIR=""
-[ -n "$SELF" ] && [ -f "$SELF" ] && SELFDIR=$(cd "$(dirname "$SELF")" && pwd)
+# 获取代码会连本脚本一起替换，而 bash 是增量读取脚本的，因此拉完代码后
+# 用新版本重新 exec 一次，后续向导与构建全跑在新代码上。
+if [ -z "${SUBGATE_REEXEC:-}" ]; then
+  SELF=${BASH_SOURCE[0]:-}
+  SELFDIR=""
+  [ -n "$SELF" ] && [ -f "$SELF" ] && SELFDIR=$(cd "$(dirname "$SELF")" && pwd)
 
-if [ -n "$SELFDIR" ] && [ -d "$SELFDIR/.git" ] && grep -q '^module subgate' "$SELFDIR/go.mod" 2>/dev/null; then
-  echo "== 本地源码目录 ${SELFDIR}，更新代码…"
-  cd "$SELFDIR"
-  git pull --ff-only || echo "(git pull 跳过，使用当前工作区代码)"
-elif [ -d "$DIR/.git" ]; then
-  echo "== 更新已有源码 $DIR"
-  git -C "$DIR" fetch --depth 1 origin "$REF"
-  git -C "$DIR" reset --hard FETCH_HEAD   # data/ 已 gitignore，不受影响
-  cd "$DIR"
-else
-  echo "== 从 $REPO 获取源码到 $DIR"
-  git clone --depth 1 --branch "$REF" "$REPO" "$DIR"
-  cd "$DIR"
+  if [ -n "$SELFDIR" ] && [ -d "$SELFDIR/.git" ] && grep -q '^module subgate' "$SELFDIR/go.mod" 2>/dev/null; then
+    echo "== 本地源码目录 ${SELFDIR}，更新代码…"
+    cd "$SELFDIR"
+    git pull --ff-only || echo "(git pull 跳过，使用当前工作区代码)"
+  elif [ -d "$DIR/.git" ]; then
+    echo "== 更新已有源码 $DIR"
+    git -C "$DIR" fetch --depth 1 origin "$REF"
+    git -C "$DIR" reset --hard FETCH_HEAD   # data/ 已 gitignore，不受影响
+    cd "$DIR"
+  else
+    echo "== 从 $REPO 获取源码到 $DIR"
+    git clone --depth 1 --branch "$REF" "$REPO" "$DIR"
+    cd "$DIR"
+  fi
+  echo "   代码版本: $(git rev-parse --short HEAD)"
+  SUBGATE_REEXEC=1 exec bash "$(pwd)/deploy.sh"
 fi
-echo "   代码版本: $(git rev-parse --short HEAD)"
+
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # curl|bash 时 stdin 是脚本本身，交互输入必须读 /dev/tty；存在但不可用时也要降级
 if { : </dev/tty; } 2>/dev/null; then TTY=/dev/tty; else TTY=""; echo "== 非交互环境：所有选项使用默认值（部署后可在后台设置页修正）"; fi

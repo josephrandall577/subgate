@@ -6,15 +6,21 @@ cd "$(dirname "$0")"
 DATA=data
 REF=${SUBGATE_REF:-main}
 
-if [ -d .git ]; then
-  echo "== 拉取最新代码 (origin/$REF)"
-  git fetch --depth 1 origin "$REF"
-  git reset --hard FETCH_HEAD
-  echo "   代码版本: $(git rev-parse --short HEAD)"
-else
-  echo "警告: 非 git 目录，跳过拉取，仅重新构建"
+# 本脚本会把自己一起更新掉。bash 是增量读取脚本文件的，边跑边改会执行到错位
+# 内容（旧逻辑或语法碎片），所以：先只拉代码，然后用新版本重新执行一次。
+if [ -z "${SUBGATE_REEXEC:-}" ]; then
+  if [ -d .git ]; then
+    echo "== 拉取最新代码 (origin/$REF)"
+    git fetch --depth 1 origin "$REF"
+    git reset --hard FETCH_HEAD
+    echo "   代码版本: $(git rev-parse --short HEAD)"
+  else
+    echo "警告: 非 git 目录，跳过拉取，仅重新构建"
+  fi
+  SUBGATE_REEXEC=1 exec bash "$(pwd)/update.sh" "$@"
 fi
 
+echo "== 构建并重启"
 go build -o subgate .
 
 if systemctl is-active subgate >/dev/null 2>&1; then
@@ -35,4 +41,4 @@ GWPORT=$(grep -o '"gateway_addr": *"[^"]*"' "$DATA/config.json" | sed 's/.*:\([0
 OK=1
 if curl -sf -o /dev/null "http://$ADMINADDR/$PANEL/"; then echo "健康检查: 管理后台 OK"; else echo "失败: 管理后台无响应"; OK=0; fi
 if (exec 3<>"/dev/tcp/127.0.0.1/$GWPORT") 2>/dev/null; then echo "健康检查: 网关端口 OK"; else echo "失败: 网关端口不通"; OK=0; fi
-if [ "$OK" = 1 ]; then echo "更新完成（配置与机密已保留）"; else exit 1; fi
+if [ "$OK" = 1 ]; then echo "更新完成（配置与机密已保留）"; else echo "排查: tail $(pwd)/subgate.log"; exit 1; fi
