@@ -244,6 +244,13 @@
       tr:last-child td {
         border-bottom: none;
       }
+      /* 日志窄列（状态/大小/拦截）不断行，宽度给足；长内容由 UA/请求列吸收 */
+      #logRows td:nth-child(5),
+      #logRows td:nth-child(6),
+      #logRows td:nth-child(8) {
+        white-space: nowrap;
+        word-break: normal;
+      }
       tbody tr:hover td {
         background: rgba(88, 166, 255, 0.05);
       }

@@ -178,3 +178,21 @@ func TestLogImportDedupe(t *testing.T) {
 		t.Fatalf("再次导入应全部去重, added=%d", a2)
 	}
 }
+
+func TestExtractToken(t *testing.T) {
+	cases := []struct{ url, subPath, want string }{
+		{"/api/v1/client/subscribe?token=abc", "/api/v1/client/subscribe", "abc"},
+		{"/api/v1/client/subscribe/xyz", "/api/v1/client/subscribe", "xyz"},
+		{"/sub/tok123/extra", "/sub", "tok123"},
+		{"/sub/tok123?token=q", "/sub", "q"}, // 查询参数优先
+		{"/other/xyz", "/sub", ""},
+		{"/sub", "/sub", ""},
+		{"/anything/xyz", "", ""}, // 未配置前缀则不猜
+	}
+	for _, c := range cases {
+		req := httptest.NewRequest("GET", c.url, nil)
+		if got := extractToken(req, c.subPath); got != c.want {
+			t.Errorf("extractToken(%q,%q)=%q want %q", c.url, c.subPath, got, c.want)
+		}
+	}
+}

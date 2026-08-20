@@ -68,6 +68,21 @@ func NewGateway(store *Store, logger *Logger, cloud *CloudIPs) *Gateway {
 }
 
 // 过滤链：真实IP → 白名单(直接放行) → IP黑名单 → 云厂商IP → UA三层 → 路径 → 限速 → 反代。
+// Token 提取：优先查询参数 ?token=；否则取订阅路径前缀后的第一段（/prefix/TOKEN 形态）
+func extractToken(req *http.Request, subPath string) string {
+	if t := req.URL.Query().Get("token"); t != "" {
+		return t
+	}
+	if subPath == "" || !strings.HasPrefix(req.URL.Path, subPath) {
+		return ""
+	}
+	rest := strings.Trim(strings.TrimPrefix(req.URL.Path, subPath), "/")
+	if i := strings.IndexByte(rest, '/'); i >= 0 {
+		rest = rest[:i]
+	}
+	return rest
+}
+
 // 拦截策略全局统一为静默断连；仅限速按规范返回429。Token黑名单不在链上（仅统计排除）。
 func (g *Gateway) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r := g.store.Rules()
@@ -75,7 +90,7 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	e := &LogEntry{
 		TS: time.Now(), IP: ip.String(), Method: req.Method,
 		Path: req.URL.RequestURI(), UA: req.UserAgent(),
-		Token: req.URL.Query().Get("token"),
+		Token: extractToken(req, r.subPath),
 	}
 	ww := &respWriter{ResponseWriter: w}
 	defer func() {
