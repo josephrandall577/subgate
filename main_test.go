@@ -180,19 +180,19 @@ func TestLogImportDedupe(t *testing.T) {
 }
 
 func TestExtractToken(t *testing.T) {
-	cases := []struct{ url, subPath, want string }{
-		{"/api/v1/client/subscribe?token=abc", "/api/v1/client/subscribe", "abc"},
-		{"/api/v1/client/subscribe/xyz", "/api/v1/client/subscribe", "xyz"},
-		{"/sub/tok123/extra", "/sub", "tok123"},
-		{"/sub/tok123?token=q", "/sub", "q"}, // 查询参数优先
-		{"/other/xyz", "/sub", ""},
-		{"/sub", "/sub", ""},
-		{"/anything/xyz", "", ""}, // 未配置前缀则不猜
+	cases := []struct{ url, want string }{
+		{"/api/v1/client/subscribe?token=abc", "abc"}, // 查询参数优先,不限长度
+		{"/nowhereOwO/b67c0722c6530ed44043a106e19868d1", "b67c0722c6530ed44043a106e19868d1"},
+		{"/b67c0722c6530ed44043a106e19868d1", "b67c0722c6530ed44043a106e19868d1"},             // 无前缀
+		{"/sub/550e8400-e29b-41d4-a716-446655440000", "550e8400-e29b-41d4-a716-446655440000"}, // UUID
+		{"/api/v1/client/subscribe", ""},                                                      // 末段是普通路径词,太短不算
+		{"/sub/short", ""},
+		{"/", ""},
 	}
 	for _, c := range cases {
 		req := httptest.NewRequest("GET", c.url, nil)
-		if got := extractToken(req, c.subPath); got != c.want {
-			t.Errorf("extractToken(%q,%q)=%q want %q", c.url, c.subPath, got, c.want)
+		if got := extractToken(req); got != c.want {
+			t.Errorf("extractToken(%q)=%q want %q", c.url, got, c.want)
 		}
 	}
 }

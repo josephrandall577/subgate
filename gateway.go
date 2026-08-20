@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/netip"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -68,19 +69,22 @@ func NewGateway(store *Store, logger *Logger, cloud *CloudIPs) *Gateway {
 }
 
 // 过滤链：真实IP → 白名单(直接放行) → IP黑名单 → 云厂商IP → UA三层 → 路径 → 限速 → 反代。
-// Token 提取：优先查询参数 ?token=；否则取订阅路径前缀后的第一段（/prefix/TOKEN 形态）
-func extractToken(req *http.Request, subPath string) string {
+// 路径末段长得像 token 才算（≥16位字母数字-_），避免把普通路径段计入统计
+var tokenSeg = regexp.MustCompile(`^[0-9A-Za-z_-]{16,}$`)
+
+// Token 提取：优先查询参数 ?token=；否则取路径末段（/prefix/TOKEN 形态，不依赖前缀配置）
+func extractToken(req *http.Request) string {
 	if t := req.URL.Query().Get("token"); t != "" {
 		return t
 	}
-	if subPath == "" || !strings.HasPrefix(req.URL.Path, subPath) {
-		return ""
+	p := strings.Trim(req.URL.Path, "/")
+	if i := strings.LastIndexByte(p, '/'); i >= 0 {
+		p = p[i+1:]
 	}
-	rest := strings.Trim(strings.TrimPrefix(req.URL.Path, subPath), "/")
-	if i := strings.IndexByte(rest, '/'); i >= 0 {
-		rest = rest[:i]
+	if tokenSeg.MatchString(p) {
+		return p
 	}
-	return rest
+	return ""
 }
 
 // 拦截策略全局统一为静默断连；仅限速按规范返回429。Token黑名单不在链上（仅统计排除）。
@@ -90,7 +94,7 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	e := &LogEntry{
 		TS: time.Now(), IP: ip.String(), Method: req.Method,
 		Path: req.URL.RequestURI(), UA: req.UserAgent(),
-		Token: extractToken(req, r.subPath),
+		Token: extractToken(req),
 	}
 	ww := &respWriter{ResponseWriter: w}
 	defer func() {
