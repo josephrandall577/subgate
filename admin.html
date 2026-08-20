@@ -8,9 +8,9 @@
     <title>管理后台</title>
     <style>
       :root {
-        --bg: #0a0d13;
-        --card: #12171f;
-        --card2: #171d28;
+        --bg: #0a0f1a;
+        --card: #111726;
+        --card2: #111726;
         --bd: #232b3a;
         --bd2: #2e3a50;
         --fg: #e2e9f4;
@@ -28,11 +28,6 @@
         margin: 0;
         color: var(--fg);
         background: var(--bg);
-        background-image: radial-gradient(
-          1200px 420px at 50% -120px,
-          #16233a80,
-          transparent
-        );
         font:
           14px/1.55 -apple-system,
           BlinkMacSystemFont,
@@ -71,7 +66,7 @@
         position: sticky;
         top: 0;
         z-index: 5;
-        background: rgba(13, 17, 24, 0.88);
+        background: rgba(10, 15, 26, 0.88);
         backdrop-filter: blur(10px);
         border-bottom: 1px solid var(--bd);
       }
@@ -128,7 +123,7 @@
 
       /* ── 卡片 ── */
       .card {
-        background: linear-gradient(180deg, var(--card2), var(--card));
+        background: var(--card);
         border: 1px solid var(--bd);
         border-radius: 14px;
         padding: 16px;
@@ -368,7 +363,7 @@
         margin-bottom: 16px;
       }
       .statcard {
-        background: linear-gradient(180deg, var(--card2), var(--card));
+        background: var(--card);
         border: 1px solid var(--bd);
         border-radius: 14px;
         padding: 14px 16px;
