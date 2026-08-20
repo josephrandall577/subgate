@@ -10,7 +10,6 @@
       :root {
         --bg: #0a0f1a;
         --card: #111726;
-        --card2: #111726;
         --bd: #232b3a;
         --bd2: #2e3a50;
         --fg: #e2e9f4;
@@ -284,7 +283,7 @@
       .tablewrap thead th {
         position: sticky;
         top: 0;
-        background: var(--card2);
+        background: var(--card);
         z-index: 1;
         box-shadow: 0 1px 0 var(--bd);
       }
@@ -1191,11 +1190,11 @@
           token: $("#f_token").value,
           ua: $("#f_ua").value,
           subonly: $("#f_sub").checked ? "1" : "",
+          block: $("#f_block").checked ? "1" : "",
           limit: 500,
         });
         const d = await api("logs?" + p);
-        let entries = d.entries || [];
-        if ($("#f_block").checked) entries = entries.filter((e) => e.block);
+        const entries = d.entries || [];
         fillT(
           "#logRows",
           entries.map((e) =>
@@ -1236,12 +1235,14 @@
           loadLogs();
         }
       });
-      /* 自动刷新（勾选后每10秒） */
+      /* 自动刷新（勾选后每10秒；正在输入筛选条件时跳过，不拿半截关键词查询） */
       setInterval(() => {
+        const a = document.activeElement;
         if (
           $("#f_auto").checked &&
           !$("#v-logs").classList.contains("hidden") &&
-          !$("#app").classList.contains("hidden")
+          !$("#app").classList.contains("hidden") &&
+          !(a && a.matches("#logFilters input:not([type=checkbox])"))
         )
           loadLogs();
       }, 10000);

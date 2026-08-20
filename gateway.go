@@ -81,6 +81,7 @@ func extractToken(req *http.Request) string {
 	if i := strings.LastIndexByte(p, '/'); i >= 0 {
 		p = p[i+1:]
 	}
+	p, _, _ = strings.Cut(p, "&") // 客户端误用 & 拼参数（无?，如 /TOKEN&flag=meta）时截掉伪查询串
 	if tokenSeg.MatchString(p) {
 		return p
 	}

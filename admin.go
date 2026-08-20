@@ -155,7 +155,7 @@ func (a *Admin) logsGet(w http.ResponseWriter, r *http.Request) {
 	entries := a.logger.Query(QueryOpts{
 		Range: q.Get("range"), IP: strings.TrimSpace(q.Get("ip")), Status: strings.TrimSpace(q.Get("status")),
 		Token: strings.TrimSpace(q.Get("token")), UA: strings.TrimSpace(q.Get("ua")),
-		SubOnly: q.Get("subonly") == "1", SubPrefix: a.store.Config().SubPath, Limit: limit,
+		SubOnly: q.Get("subonly") == "1", BlockOnly: q.Get("block") == "1", SubPrefix: a.store.Config().SubPath, Limit: limit,
 	})
 	jsonOK(w, map[string]any{"entries": entries})
 }

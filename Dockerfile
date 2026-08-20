@@ -7,7 +7,8 @@ COPY . .
 RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /subgate .
 
 FROM alpine:3.22
-RUN apk add --no-cache ca-certificates
+# tzdata: /etc/localtime 挂载缺失时 TZ 环境变量仍可生效，避免 24h 统计图退化到 UTC
+RUN apk add --no-cache ca-certificates tzdata
 COPY --from=build /subgate /usr/local/bin/subgate
 ENTRYPOINT ["subgate"]
 CMD ["-data", "/data"]

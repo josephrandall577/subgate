@@ -134,6 +134,30 @@ func TestGatewayChain(t *testing.T) {
 	if !found {
 		t.Fatal("日志缺少拦截原因")
 	}
+
+	// BlockOnly 服务端过滤：只返拦截记录
+	blocked := logger.Query(QueryOpts{Range: "today", Limit: 1000, BlockOnly: true})
+	if len(blocked) == 0 {
+		t.Fatal("BlockOnly 查询应有结果")
+	}
+	for _, e := range blocked {
+		if e.Block == "" {
+			t.Fatal("BlockOnly 查询返回了放行记录")
+		}
+	}
+
+	// Hourly 桶总和 = 总请求数，独立IP > 0
+	an := logger.AnalyzeToday(nil, 2, 2)
+	sum := 0
+	for _, hb := range an.Hourly {
+		sum += hb.Total
+	}
+	if sum != an.Total || an.Total != len(entries) {
+		t.Fatalf("Hourly 桶总和=%d, Total=%d, 日志条数=%d，应相等", sum, an.Total, len(entries))
+	}
+	if an.UniqIPs == 0 {
+		t.Fatal("UniqIPs 应 > 0")
+	}
 }
 
 func TestParsePrefixLoose(t *testing.T) {
@@ -183,9 +207,10 @@ func TestExtractToken(t *testing.T) {
 	cases := []struct{ url, want string }{
 		{"/api/v1/client/subscribe?token=abc", "abc"}, // 查询参数优先,不限长度
 		{"/nowhereOwO/b67c0722c6530ed44043a106e19868d1", "b67c0722c6530ed44043a106e19868d1"},
-		{"/b67c0722c6530ed44043a106e19868d1", "b67c0722c6530ed44043a106e19868d1"},             // 无前缀
-		{"/sub/550e8400-e29b-41d4-a716-446655440000", "550e8400-e29b-41d4-a716-446655440000"}, // UUID
-		{"/api/v1/client/subscribe", ""},                                                      // 末段是普通路径词,太短不算
+		{"/nowhereOwO/0ccf3f16f5fdbcec2dcd0c8244c70dd6&flag=meta", "0ccf3f16f5fdbcec2dcd0c8244c70dd6"}, // 客户端误用&拼参数（无?）
+		{"/b67c0722c6530ed44043a106e19868d1", "b67c0722c6530ed44043a106e19868d1"},                      // 无前缀
+		{"/sub/550e8400-e29b-41d4-a716-446655440000", "550e8400-e29b-41d4-a716-446655440000"},          // UUID
+		{"/api/v1/client/subscribe", ""},                                                               // 末段是普通路径词,太短不算
 		{"/sub/short", ""},
 		{"/", ""},
 	}

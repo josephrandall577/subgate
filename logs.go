@@ -108,6 +108,7 @@ func forEachEntry(files []string, fn func(LogEntry)) {
 type QueryOpts struct {
 	Range, IP, Status, Token, UA, SubPrefix string
 	SubOnly                                 bool
+	BlockOnly                               bool
 	Limit                                   int
 }
 
@@ -137,6 +138,9 @@ func (l *Logger) Query(o QueryOpts) []LogEntry {
 			return
 		}
 		if o.SubOnly && (o.SubPrefix == "" || !strings.HasPrefix(e.Path, o.SubPrefix)) {
+			return
+		}
+		if o.BlockOnly && e.Block == "" {
 			return
 		}
 		out = append(out, e)
@@ -282,7 +286,7 @@ func topKV(m map[string]int, n int) []KV {
 	return out
 }
 
-// AnalyzeToday 扫描当日日志做分组计数。黑名单Token整体排除在统计外（监控语义）。
+// AnalyzeToday 扫描当日日志做分组计数。黑名单Token仅从Token维度统计排除（Total/Hourly/IP计数仍计入，监控语义）。
 func (l *Logger) AnalyzeToday(tokenBL map[string]bool, tokenIPThresh, ipTokenThresh int) Analysis {
 	a := Analysis{}
 	ipc := map[string]int{}
