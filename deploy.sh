@@ -39,8 +39,11 @@ if ! go_ok; then
   [ "$(id -u)" != 0 ] && SUDO=sudo
   $SUDO rm -rf /usr/local/go
   curl -fsSL "https://go.dev/dl/${GOVER}.linux-${ARCH}.tar.gz" | $SUDO tar -C /usr/local -xz
-  export PATH=$PATH:/usr/local/go/bin
+  export PATH=/usr/local/go/bin:$PATH # 前置,压过 apt 装的老 Go
+  hash -r
+  echo 'export PATH=/usr/local/go/bin:$PATH' | $SUDO tee /etc/profile.d/golang.sh >/dev/null
   go version
+  go_ok || { echo "Go 安装失败"; exit 1; }
 fi
 
 # ── 获取源码 ──
