@@ -15,8 +15,33 @@ REF=${SUBGATE_REF:-main}
 DIR=${SUBGATE_DIR:-$HOME/subgate}
 DATA=data
 
-command -v git >/dev/null || { echo "需要 git"; exit 1; }
-command -v go  >/dev/null || { echo "需要 Go 工具链 (https://go.dev/dl/)"; exit 1; }
+command -v git >/dev/null || {
+  echo "需要 git"
+  exit 1
+}
+# Go ≥1.21 才能按 go.mod 自动下载所需工具链;缺失或太老则装官方最新版
+go_ok() {
+  command -v go >/dev/null || return 1
+  local v
+  v=$(go env GOVERSION)
+  v=${v#go}
+  [ "$(printf '%s\n' 1.21 "$v" | sort -V | head -1)" = "1.21" ]
+}
+if ! go_ok; then
+  echo "== 未找到可用 Go(需 ≥1.21),安装官方工具链…"
+  GOVER=$(curl -fsSL 'https://go.dev/VERSION?m=text' | head -1)
+  case $(uname -m) in x86_64) ARCH=amd64 ;; aarch64) ARCH=arm64 ;; *)
+    echo "未知架构,请手动安装 Go: https://go.dev/dl/"
+    exit 1
+    ;;
+  esac
+  SUDO=""
+  [ "$(id -u)" != 0 ] && SUDO=sudo
+  $SUDO rm -rf /usr/local/go
+  curl -fsSL "https://go.dev/dl/${GOVER}.linux-${ARCH}.tar.gz" | $SUDO tar -C /usr/local -xz
+  export PATH=$PATH:/usr/local/go/bin
+  go version
+fi
 
 # ── 获取源码 ──
 # 以本地文件方式执行且自身就在仓库里 → 原地更新；
@@ -35,7 +60,7 @@ if [ -z "${SUBGATE_REEXEC:-}" ]; then
   elif [ -d "$DIR/.git" ]; then
     echo "== 更新已有源码 $DIR"
     git -C "$DIR" fetch --depth 1 origin "$REF"
-    git -C "$DIR" reset --hard FETCH_HEAD   # data/ 已 gitignore，不受影响
+    git -C "$DIR" reset --hard FETCH_HEAD # data/ 已 gitignore，不受影响
     cd "$DIR"
   else
     echo "== 从 $REPO 获取源码到 $DIR"
@@ -49,7 +74,10 @@ fi
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # curl|bash 时 stdin 是脚本本身，交互输入必须读 /dev/tty；存在但不可用时也要降级
-if { : </dev/tty; } 2>/dev/null; then TTY=/dev/tty; else TTY=""; echo "== 非交互环境：所有选项使用默认值（部署后可在后台设置页修正）"; fi
+if { : </dev/tty; } 2>/dev/null; then TTY=/dev/tty; else
+  TTY=""
+  echo "== 非交互环境：所有选项使用默认值（部署后可在后台设置页修正）"
+fi
 ask() {
   local v=""
   [ -n "$TTY" ] && { read -rp "$1 [$2]: " v <"$TTY" || true; }
@@ -141,7 +169,8 @@ else
   echo "警告: 管理后台无响应，请检查日志 (journalctl -u subgate 或 $(pwd)/subgate.log)"
 fi
 
-INFO=$(cat <<EOF
+INFO=$(
+  cat <<EOF
 ========================================
 SubGate 部署完成 $(date '+%F %T')
 源码目录:  $(pwd)  (版本 $(git rev-parse --short HEAD))
