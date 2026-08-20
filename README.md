@@ -40,7 +40,7 @@ curl -fsSL https://raw.githubusercontent.com/josephrandall577/subgate/main/deplo
 data/secrets.json     部署期机密（账号、bcrypt密码、随机后台路径）— 升级不覆盖
 data/config.json      运行期配置（上游、名单、UA规则、限速…）— 后台改动立即热生效
 data/cloud_ips.json   云厂商CIDR缓存
-data/logs/access-YYYY-MM-DD.jsonl   按天访问日志（JSONL，导入/导出/清理均基于此）
+data/logs/access-YYYY-MM-DD.jsonl   按天访问日志（JSONL，导入/导出/清理均基于此；保留5天，每小时自动清理过期文件）
 ```
 
 其余说明：Token 优先从查询参数 `token` 提取，否则取路径末段（`/prefix/TOKEN` 形态，须为≥16位字母数字`-_`）；真实IP头为逗号列表时取最右值（防最左伪造，CF-Connecting-IP 单值不受影响）；上游 DNS 依赖 Go 新建连接时的自然重解析（空闲连接 90s 回收）；证书到期信息通过对"证书监控域名"发起 TLS 握手获取（CF 场景查的即边缘证书）；自动申请证书未实现——CF Tunnel 场景 TLS 由 Cloudflare 终结，无需本机证书。
