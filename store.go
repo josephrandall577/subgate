@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -285,11 +286,18 @@ func (s *Store) Update(fn func(*Config) error) error {
 	return writeJSONFile(filepath.Join(s.dir, "config.json"), s.cfg)
 }
 
-// Config 返回配置浅拷贝；调用方将列表视为只读。
+// Config 返回配置快照；各列表深拷贝，读者可安全并发使用（mutator 会就地改写底层数组）
 func (s *Store) Config() Config {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.cfg
+	c := s.cfg
+	c.TrustedProxies = slices.Clone(c.TrustedProxies)
+	c.IPWhitelist = slices.Clone(c.IPWhitelist)
+	c.IPBlacklist = slices.Clone(c.IPBlacklist)
+	c.UABan = slices.Clone(c.UABan)
+	c.UAAllow = slices.Clone(c.UAAllow)
+	c.TokenBlacklist = slices.Clone(c.TokenBlacklist)
+	return c
 }
 
 func (s *Store) SecretsInfo() (user, panelPath string) {

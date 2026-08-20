@@ -4,7 +4,7 @@
 
 ## 快速开始
 
-服务器上一条命令（从 GitHub 取源码 → 交互配置 → 构建 → 启动 → 打印访问信息）：
+服务器上一条命令（从 GitHub 取源码 → 交互配置 → Docker 镜像内编译 → 启动容器 → 打印访问信息）。依赖 git 与 Docker，**缺 Docker 时会自动执行 get.docker.com 官方脚本安装**：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/josephrandall577/subgate/main/deploy.sh | bash
@@ -25,7 +25,7 @@ curl -fsSL https://raw.githubusercontent.com/josephrandall577/subgate/main/deplo
 
 ## 过滤链（命中即短路）
 
-真实IP还原 → **IP白名单（命中直接反代，架构上最高优先级）** → IP黑名单 → 云厂商IP（阿里/腾讯/华为/字节/GCP/AWS/Azure/DO/UCloud/Vultr，ASN 数据源每7天自动刷新，失败保留旧数据）→ UA三层（白名单>自定义封禁>内置规则）→ 非订阅路径 → 按IP限速（默认 20次/分，突发5）→ 反代上游。
+真实IP还原 → **IP白名单（命中直接反代，架构上最高优先级）** → IP黑名单 → 云厂商IP（阿里/腾讯/华为/字节/GCP/AWS/Azure/DO/UCloud/Vultr，ASN 数据源每7天自动刷新，失败保留旧数据）→ UA四层（白名单豁免 > 空UA拦截 > 内置规则 > 自定义封禁）→ 非订阅路径 → 按IP限速（默认 20次/分，突发5）→ 反代上游。
 
 ## 语义决策（按需求文档四点明确）
 
@@ -43,4 +43,4 @@ data/cloud_ips.json   云厂商CIDR缓存
 data/logs/access-YYYY-MM-DD.jsonl   按天访问日志（JSONL，导入/导出/清理均基于此）
 ```
 
-其余说明：Token 从查询参数 `token` 提取；上游 DNS 依赖 Go 新建连接时的自然重解析（空闲连接 90s 回收）；证书到期信息通过对"证书监控域名"发起 TLS 握手获取（CF 场景查的即边缘证书）；自动申请证书未实现——CF Tunnel 场景 TLS 由 Cloudflare 终结，无需本机证书。
+其余说明：Token 优先从查询参数 `token` 提取，否则取路径末段（`/prefix/TOKEN` 形态，须为≥16位字母数字`-_`）；真实IP头为逗号列表时取最右值（防最左伪造，CF-Connecting-IP 单值不受影响）；上游 DNS 依赖 Go 新建连接时的自然重解析（空闲连接 90s 回收）；证书到期信息通过对"证书监控域名"发起 TLS 握手获取（CF 场景查的即边缘证书）；自动申请证书未实现——CF Tunnel 场景 TLS 由 Cloudflare 终结，无需本机证书。

@@ -157,9 +157,12 @@ func (c *CloudIPs) Refresh(tmpl string) {
 					return
 				}
 				cidrs = append(cidrs, v4...)
-				if v6, err := fetchCIDRs(fmt.Sprintf(tmpl, asn, "ipv6-aggregated.txt")); err == nil {
-					cidrs = append(cidrs, v6...)
+				v6, err := fetchCIDRs(fmt.Sprintf(tmpl, asn, "ipv6-aggregated.txt"))
+				if err != nil { // v6 失败同样算该厂商本轮失败，保留旧数据（数据源对所有 ASN 都提供 v6 文件）
+					put(&providerData{Name: name, Err: fmt.Sprintf("AS%d v6: %v", asn, err)})
+					return
 				}
+				cidrs = append(cidrs, v6...)
 			}
 			if len(cidrs) == 0 {
 				put(&providerData{Name: name, Err: "空数据"})

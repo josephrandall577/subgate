@@ -183,8 +183,10 @@ func clientIP(req *http.Request, r *Rules) netip.Addr {
 	if v == "" {
 		return addr
 	}
-	first := strings.TrimSpace(strings.SplitN(v, ",", 2)[0])
-	if a, err := netip.ParseAddr(first); err == nil {
+	// 取最右值：多跳头（如 X-Forwarded-For）中最右是受信代理实际看到的一跳，最左可被客户端伪造；CF-Connecting-IP 单值不受影响
+	parts := strings.Split(v, ",")
+	last := strings.TrimSpace(parts[len(parts)-1])
+	if a, err := netip.ParseAddr(last); err == nil {
 		return a.Unmap()
 	}
 	return addr

@@ -154,8 +154,8 @@ func TestClientIP(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
 	req.RemoteAddr = "127.0.0.1:1234"
 	req.Header.Set("X-Forwarded-For", "9.9.9.9, 8.8.8.8")
-	if ip := clientIP(req, r); ip.String() != "9.9.9.9" {
-		t.Fatalf("受信来源应取头部第一个IP, got %s", ip)
+	if ip := clientIP(req, r); ip.String() != "8.8.8.8" {
+		t.Fatalf("受信来源应取头部最右IP(最左可伪造), got %s", ip)
 	}
 	req.RemoteAddr = "1.1.1.1:1234" // 非受信来源：忽略头，防伪造
 	if ip := clientIP(req, r); ip.String() != "1.1.1.1" {
@@ -195,4 +195,28 @@ func TestExtractToken(t *testing.T) {
 			t.Errorf("extractToken(%q)=%q want %q", c.url, got, c.want)
 		}
 	}
+}
+
+func TestConfigSnapshotRace(t *testing.T) {
+	store, err := LoadStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = store.Update(func(c *Config) error {
+		c.IPBlacklist = append(c.IPBlacklist, Entry{Value: "1.2.3.4"})
+		return nil
+	})
+	done := make(chan struct{})
+	go func() { // 写者：就地改写列表元素(listsAdd 改备注的形态)
+		defer close(done)
+		for i := 0; i < 100; i++ {
+			_ = store.Update(func(c *Config) error { c.IPBlacklist[0].Remark = "x"; return nil })
+		}
+	}()
+	for i := 0; i < 100; i++ { // 读者：遍历快照(analysis/listsGet 的形态)
+		for _, e := range store.Config().IPBlacklist {
+			_ = e.Remark
+		}
+	}
+	<-done
 }
