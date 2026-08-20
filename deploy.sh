@@ -19,34 +19,10 @@ command -v git >/dev/null || {
   echo "需要 git"
   exit 1
 }
-# Go ≥1.21 才能按 go.mod 自动下载所需工具链;缺失或太老则装官方最新版
-go_ok() {
-  command -v go >/dev/null || return 1
-  local v
-  v=$(go env GOVERSION)
-  v=${v#go}
-  [ "$(printf '%s\n' 1.21 "$v" | sort -V | head -1)" = "1.21" ]
-}
-if ! go_ok; then
-  echo "== 未找到可用 Go(需 ≥1.21),安装官方工具链…"
-  GOVER=$(curl -fsSL 'https://go.dev/VERSION?m=text' | head -1)
-  case $(uname -m) in x86_64) ARCH=amd64 ;; aarch64) ARCH=arm64 ;; *)
-    echo "未知架构,请手动安装 Go: https://go.dev/dl/"
-    exit 1
-    ;;
-  esac
-  SUDO=""
-  [ "$(id -u)" != 0 ] && SUDO=sudo
-  $SUDO rm -rf /usr/local/go
-  curl -fsSL "https://go.dev/dl/${GOVER}.linux-${ARCH}.tar.gz" | $SUDO tar -C /usr/local -xz
-  export PATH=/usr/local/go/bin:$PATH # 前置,压过 apt 装的老 Go
-  hash -r
-  echo 'export PATH=/usr/local/go/bin:$PATH' | $SUDO tee /etc/profile.d/golang.sh >/dev/null
-  go version
-  go_ok || {
-    echo "Go 安装失败"
-    exit 1
-  }
+# 编译与运行全在 Docker 内,主机无需 Go
+if ! command -v docker >/dev/null; then
+  echo "== 未找到 Docker,安装官方版…"
+  curl -fsSL https://get.docker.com | sh
 fi
 
 # ── 获取源码 ──
@@ -99,14 +75,14 @@ HDR=$(ask "真实IP头(Cloudflare 用 CF-Connecting-IP)" "CF-Connecting-IP")
 TRUSTED=$(ask "受信代理网段(逗号分隔，本机 cloudflared 保持默认)" "127.0.0.0/8,::1/128")
 CERTDOMAIN=$(ask "证书监控域名(对外订阅域名，可空)" "")
 
-echo "构建..."
-go build -o subgate .
+echo "构建镜像..."
+docker build -t subgate .
 
 NEW_SECRET=0
 if [ ! -f "$DATA/secrets.json" ]; then
   PASS=$(openssl rand -hex 12)
   PANEL=$(openssl rand -hex 8)
-  ./subgate -init -data "$DATA" -user admin -pass "$PASS" -panel "$PANEL"
+  docker run --rm -v "$(pwd)/$DATA":/data subgate -init -data /data -user admin -pass "$PASS" -panel "$PANEL"
   NEW_SECRET=1
 else
   echo "已存在 secrets.json：保留原密码与后台路径"
@@ -142,37 +118,18 @@ else
   GWPORT=$(grep -o '"gateway_addr": *"[^"]*"' "$DATA/config.json" | sed 's/.*:\([0-9]*\)".*/\1/')
 fi
 
-# 启动：优先 systemd（root），否则 nohup
-if command -v systemctl >/dev/null 2>&1 && [ "$(id -u)" = 0 ]; then
-  cat >/etc/systemd/system/subgate.service <<EOF
-[Unit]
-Description=SubGate subscription gateway
-After=network.target
-
-[Service]
-WorkingDirectory=$(pwd)
-ExecStart=$(pwd)/subgate -data $(pwd)/$DATA
-Restart=always
-RestartSec=3
-
-[Install]
-WantedBy=multi-user.target
-EOF
-  systemctl daemon-reload
-  systemctl enable --now subgate
-  systemctl restart subgate
-else
-  # 匹配不带路径前缀，以兼容旧版本用 ./subgate 启动的残留进程（单主机单实例部署）
-  pkill -f '[/.]subgate -data' 2>/dev/null || true
-  sleep 0.5
-  nohup "$(pwd)/subgate" -data "$DATA" >>subgate.log 2>&1 &
-fi
+# 启动容器（host 网络：127.0.0.1 管理端口与受信代理配置与裸机完全一致）
+systemctl disable --now subgate 2>/dev/null || true # 停用旧 systemd 部署
+pkill -f '[/.]subgate -data' 2>/dev/null || true    # 停掉旧 nohup 部署
+docker rm -f subgate >/dev/null 2>&1 || true
+docker run -d --name subgate --network host --restart unless-stopped \
+  -v "$(pwd)/$DATA":/data -v /etc/localtime:/etc/localtime:ro subgate
 
 sleep 1.5
 if curl -sf -o /dev/null "http://127.0.0.1:$ADMINPORT/$PANEL/"; then
   echo "健康检查: 管理后台 OK"
 else
-  echo "警告: 管理后台无响应，请检查日志 (journalctl -u subgate 或 $(pwd)/subgate.log)"
+  echo "警告: 管理后台无响应，请检查日志 (docker logs subgate)"
 fi
 
 INFO=$(
@@ -187,6 +144,7 @@ SubGate 部署完成 $(date '+%F %T')
 管理密码:  $PASS
 提示: Cloudflare Zero Trust 中真实IP头保持 CF-Connecting-IP 即可
 更新: cd $(pwd) && ./update.sh
+日志: docker logs -f subgate
 ========================================
 EOF
 )

@@ -20,17 +20,14 @@ if [ -z "${SUBGATE_REEXEC:-}" ]; then
   SUBGATE_REEXEC=1 exec bash "$(pwd)/update.sh" "$@"
 fi
 
-echo "== 构建并重启"
-go build -o subgate .
+echo "== 构建镜像并重启容器"
+docker build -t subgate .
 
-if systemctl is-active subgate >/dev/null 2>&1; then
-  systemctl restart subgate
-else
-  # 匹配不带路径前缀，以兼容旧版本用 ./subgate 启动的残留进程（单主机单实例部署）
-  pkill -f '[/.]subgate -data' 2>/dev/null || true
-  sleep 0.5
-  nohup "$(pwd)/subgate" -data "$DATA" >>subgate.log 2>&1 &
-fi
+systemctl disable --now subgate 2>/dev/null || true # 停用旧 systemd 部署
+pkill -f '[/.]subgate -data' 2>/dev/null || true    # 停掉旧 nohup 部署
+docker rm -f subgate >/dev/null 2>&1 || true
+docker run -d --name subgate --network host --restart unless-stopped \
+  -v "$(pwd)/$DATA":/data -v /etc/localtime:/etc/localtime:ro subgate
 
 sleep 1.5
 PANEL=$(grep -o '"panel_path": *"[^"]*"' "$DATA/secrets.json" | sed 's/.*"\([^"]*\)"$/\1/')
@@ -48,6 +45,6 @@ if (exec 3<>"/dev/tcp/127.0.0.1/$GWPORT") 2>/dev/null; then echo "健康检查: 
   OK=0
 fi
 if [ "$OK" = 1 ]; then echo "更新完成（配置与机密已保留）"; else
-  echo "排查: tail $(pwd)/subgate.log"
+  echo "排查: docker logs --tail 100 subgate"
   exit 1
 fi
