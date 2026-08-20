@@ -39,6 +39,15 @@ ADMINADDR=$(grep -o '"admin_addr": *"[^"]*"' "$DATA/config.json" | sed 's/.*"\([
 GWPORT=$(grep -o '"gateway_addr": *"[^"]*"' "$DATA/config.json" | sed 's/.*:\([0-9]*\)".*/\1/')
 
 OK=1
-if curl -sf -o /dev/null "http://$ADMINADDR/$PANEL/"; then echo "健康检查: 管理后台 OK"; else echo "失败: 管理后台无响应"; OK=0; fi
-if (exec 3<>"/dev/tcp/127.0.0.1/$GWPORT") 2>/dev/null; then echo "健康检查: 网关端口 OK"; else echo "失败: 网关端口不通"; OK=0; fi
-if [ "$OK" = 1 ]; then echo "更新完成（配置与机密已保留）"; else echo "排查: tail $(pwd)/subgate.log"; exit 1; fi
+if curl -sf -o /dev/null "http://$ADMINADDR/$PANEL/"; then echo "健康检查: 管理后台 OK"; else
+  echo "失败: 管理后台无响应"
+  OK=0
+fi
+if (exec 3<>"/dev/tcp/127.0.0.1/$GWPORT") 2>/dev/null; then echo "健康检查: 网关端口 OK"; else
+  echo "失败: 网关端口不通"
+  OK=0
+fi
+if [ "$OK" = 1 ]; then echo "更新完成（配置与机密已保留）"; else
+  echo "排查: tail $(pwd)/subgate.log"
+  exit 1
+fi

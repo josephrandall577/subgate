@@ -43,7 +43,10 @@ if ! go_ok; then
   hash -r
   echo 'export PATH=/usr/local/go/bin:$PATH' | $SUDO tee /etc/profile.d/golang.sh >/dev/null
   go version
-  go_ok || { echo "Go 安装失败"; exit 1; }
+  go_ok || {
+    echo "Go 安装失败"
+    exit 1
+  }
 fi
 
 # ── 获取源码 ──
