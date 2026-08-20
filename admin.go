@@ -395,7 +395,8 @@ func (a *Admin) settingsGet(w http.ResponseWriter, _ *http.Request) {
 		"trusted_proxies": cfg.TrustedProxies,
 		"rate_per_min":    cfg.RatePerMin, "rate_burst": cfg.RateBurst,
 		"susp_token_ips": cfg.SuspTokenIPs, "susp_ip_tokens": cfg.SuspIPTokens,
-		"cert_domain": cfg.CertDomain, "asn_url_template": cfg.ASNURLTemplate,
+		"log_retain_days": cfg.LogRetainDays,
+		"cert_domain":     cfg.CertDomain, "asn_url_template": cfg.ASNURLTemplate,
 		"user": user, "panel_path": panel,
 	})
 }
@@ -413,6 +414,7 @@ func (a *Admin) settingsPost(w http.ResponseWriter, r *http.Request) {
 		RateBurst      int      `json:"rate_burst"`
 		SuspTokenIPs   int      `json:"susp_token_ips"`
 		SuspIPTokens   int      `json:"susp_ip_tokens"`
+		LogRetainDays  int      `json:"log_retain_days"`
 		CertDomain     string   `json:"cert_domain"`
 		ASNURLTemplate string   `json:"asn_url_template"`
 	}
@@ -435,8 +437,8 @@ func (a *Admin) settingsPost(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if in.RatePerMin <= 0 || in.RateBurst < 1 || in.SuspTokenIPs < 1 || in.SuspIPTokens < 1 {
-		jsonErr(w, http.StatusBadRequest, "限速/阈值须为正数")
+	if in.RatePerMin <= 0 || in.RateBurst < 1 || in.SuspTokenIPs < 1 || in.SuspIPTokens < 1 || in.LogRetainDays < 1 {
+		jsonErr(w, http.StatusBadRequest, "限速/阈值/日志保留天数须为正数")
 		return
 	}
 	if !strings.Contains(in.GatewayAddr, ":") || !strings.Contains(in.AdminAddr, ":") {
@@ -451,6 +453,7 @@ func (a *Admin) settingsPost(w http.ResponseWriter, r *http.Request) {
 		c.TrustedProxies = in.TrustedProxies
 		c.RatePerMin, c.RateBurst = in.RatePerMin, in.RateBurst
 		c.SuspTokenIPs, c.SuspIPTokens = in.SuspTokenIPs, in.SuspIPTokens
+		c.LogRetainDays = in.LogRetainDays
 		c.CertDomain, c.ASNURLTemplate = strings.TrimSpace(in.CertDomain), in.ASNURLTemplate
 		return nil
 	})

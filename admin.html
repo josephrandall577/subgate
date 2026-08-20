@@ -971,6 +971,10 @@
               ><input id="s_sip" type="number" min="1" />
             </div>
             <div class="kv">
+              <span>日志保留天数 <span class="hint">过期整天自动删除</span></span
+              ><input id="s_retain" type="number" min="1" />
+            </div>
+            <div class="kv">
               <span>证书监控域名</span
               ><input id="s_cert" placeholder="sub.example.com" />
             </div>
@@ -1552,6 +1556,7 @@
         $("#s_burst").value = d.rate_burst;
         $("#s_stok").value = d.susp_token_ips;
         $("#s_sip").value = d.susp_ip_tokens;
+        $("#s_retain").value = d.log_retain_days;
         $("#s_cert").value = d.cert_domain;
         $("#s_asn").value = d.asn_url_template;
         $("#s_panel_path").textContent = "/" + d.panel_path + "/";
@@ -1574,6 +1579,7 @@
           rate_burst: +$("#s_burst").value,
           susp_token_ips: +$("#s_stok").value,
           susp_ip_tokens: +$("#s_sip").value,
+          log_retain_days: +$("#s_retain").value,
           cert_domain: $("#s_cert").value,
           asn_url_template: $("#s_asn").value,
         });

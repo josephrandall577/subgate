@@ -38,9 +38,9 @@ func main() {
 		log.Fatal(err)
 	}
 	defer logger.Close()
-	go func() { // 日志保留5天，每小时清一次（按天删文件，今天永不删）
+	go func() { // 日志自动清理：每小时按配置保留天数删过期文件（改配置热生效，今天永不删）
 		for {
-			if n, _ := logger.Cleanup(5); n > 0 {
+			if n, _ := logger.Cleanup(store.Config().LogRetainDays); n > 0 {
 				log.Printf("日志自动清理: 删除 %d 个过期文件", n)
 			}
 			time.Sleep(time.Hour)

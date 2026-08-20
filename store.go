@@ -38,6 +38,7 @@ type Config struct {
 	RateBurst      int      `json:"rate_burst"`
 	SuspTokenIPs   int      `json:"susp_token_ips"`
 	SuspIPTokens   int      `json:"susp_ip_tokens"`
+	LogRetainDays  int      `json:"log_retain_days"` // 日志保留天数，过期整天文件自动删除
 	CertDomain     string   `json:"cert_domain"`
 	ASNURLTemplate string   `json:"asn_url_template"`
 	IPWhitelist    []Entry  `json:"ip_whitelist"`
@@ -107,6 +108,7 @@ func defaultConfig() Config {
 		RateBurst:      5,
 		SuspTokenIPs:   3,
 		SuspIPTokens:   3,
+		LogRetainDays:  5,
 		ASNURLTemplate: defaultASNTemplate,
 	}
 }
@@ -136,6 +138,9 @@ func applyDefaults(c *Config) {
 	}
 	if c.SuspIPTokens < 1 {
 		c.SuspIPTokens = d.SuspIPTokens
+	}
+	if c.LogRetainDays < 1 {
+		c.LogRetainDays = d.LogRetainDays
 	}
 	if c.ASNURLTemplate == "" {
 		c.ASNURLTemplate = d.ASNURLTemplate
