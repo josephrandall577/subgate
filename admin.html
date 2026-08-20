@@ -8,15 +8,18 @@
     <title>管理后台</title>
     <style>
       :root {
-        --bg: #0b0e14;
-        --card: #151b26;
-        --card2: #1a2230;
-        --bd: #242f3f;
-        --fg: #dce5f0;
-        --dim: #8b99ac;
-        --acc: #58a6ff;
-        --red: #ff7b72;
-        --green: #57d364;
+        --bg: #0a0d13;
+        --card: #12171f;
+        --card2: #171d28;
+        --bd: #232b3a;
+        --bd2: #2e3a50;
+        --fg: #e2e9f4;
+        --dim: #8b97ab;
+        --acc: #4d9fff;
+        --red: #f4756c;
+        --green: #3fce76;
+        --amber: #e8a33d;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       }
       * {
         box-sizing: border-box;
@@ -26,8 +29,8 @@
         color: var(--fg);
         background: var(--bg);
         background-image: radial-gradient(
-          1200px 400px at 50% -100px,
-          #16233a66,
+          1200px 420px at 50% -120px,
+          #16233a80,
           transparent
         );
         font:
@@ -40,7 +43,7 @@
         -webkit-font-smoothing: antialiased;
       }
       ::selection {
-        background: rgba(88, 166, 255, 0.3);
+        background: rgba(77, 159, 255, 0.3);
       }
       ::-webkit-scrollbar {
         width: 10px;
@@ -57,6 +60,8 @@
       .hidden {
         display: none !important;
       }
+
+      /* ── 头部 ── */
       header {
         display: flex;
         align-items: center;
@@ -66,7 +71,7 @@
         position: sticky;
         top: 0;
         z-index: 5;
-        background: rgba(15, 20, 28, 0.85);
+        background: rgba(13, 17, 24, 0.88);
         backdrop-filter: blur(10px);
         border-bottom: 1px solid var(--bd);
       }
@@ -83,7 +88,7 @@
         border-radius: 50%;
         background: var(--acc);
         margin-right: 8px;
-        box-shadow: 0 0 8px var(--acc);
+        box-shadow: 0 0 10px var(--acc);
       }
       nav {
         display: flex;
@@ -117,13 +122,15 @@
       }
       main {
         padding: 20px;
-        max-width: 1280px;
+        max-width: 1320px;
         margin: 0 auto;
       }
+
+      /* ── 卡片 ── */
       .card {
         background: linear-gradient(180deg, var(--card2), var(--card));
         border: 1px solid var(--bd);
-        border-radius: 12px;
+        border-radius: 14px;
         padding: 16px;
         margin-bottom: 16px;
         box-shadow:
@@ -148,6 +155,7 @@
         gap: 5px;
         color: var(--dim);
         font-size: 13px;
+        white-space: nowrap;
       }
       input[type="checkbox"] {
         accent-color: var(--acc);
@@ -170,11 +178,11 @@
       textarea:focus {
         outline: none;
         border-color: var(--acc);
-        box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+        box-shadow: 0 0 0 3px rgba(77, 159, 255, 0.15);
       }
       textarea {
         width: 100%;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-family: var(--mono);
       }
       button {
         background: #212b3b;
@@ -214,12 +222,19 @@
       }
       button.warn:hover {
         border-color: var(--red);
-        background: rgba(255, 123, 114, 0.08);
+        background: rgba(244, 117, 108, 0.08);
+      }
+      button.mini {
+        padding: 3px 10px;
+        font-size: 12px;
+        border-radius: 6px;
       }
       button:disabled {
         opacity: 0.5;
         cursor: wait;
       }
+
+      /* ── 表格 ── */
       table {
         width: 100%;
         border-collapse: collapse;
@@ -228,9 +243,9 @@
       th,
       td {
         text-align: left;
-        padding: 8px 10px;
+        padding: 7px 10px;
         border-bottom: 1px solid var(--bd);
-        vertical-align: top;
+        vertical-align: middle;
         word-break: break-all;
       }
       th {
@@ -244,16 +259,76 @@
       tr:last-child td {
         border-bottom: none;
       }
-      /* 日志窄列（状态/大小/拦截）不断行，宽度给足；长内容由 UA/请求列吸收 */
-      #logRows td:nth-child(5),
-      #logRows td:nth-child(6),
-      #logRows td:nth-child(8) {
+      tbody tr:hover td {
+        background: rgba(77, 159, 255, 0.05);
+      }
+      td.num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
         white-space: nowrap;
         word-break: normal;
       }
-      tbody tr:hover td {
-        background: rgba(88, 166, 255, 0.05);
+      td.ua {
+        max-width: 260px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        word-break: normal;
       }
+      td.empty-td {
+        text-align: center;
+        color: var(--dim);
+        padding: 22px 0;
+      }
+      .tablewrap {
+        max-height: 68vh;
+        overflow: auto;
+        border: 1px solid var(--bd);
+        border-radius: 10px;
+      }
+      .tablewrap thead th {
+        position: sticky;
+        top: 0;
+        background: var(--card2);
+        z-index: 1;
+        box-shadow: 0 1px 0 var(--bd);
+      }
+      .tablewrap tr:last-child td {
+        border-bottom: 1px solid transparent;
+      }
+
+      /* ── 徽章 / 标签 ── */
+      .badge {
+        display: inline-block;
+        padding: 1px 8px;
+        border-radius: 99px;
+        font-size: 11.5px;
+        font-weight: 600;
+        border: 1px solid;
+        white-space: nowrap;
+        word-break: normal;
+      }
+      .badge.ok {
+        color: var(--green);
+        background: rgba(63, 206, 118, 0.08);
+        border-color: rgba(63, 206, 118, 0.25);
+      }
+      .badge.drop {
+        color: var(--red);
+        background: rgba(244, 117, 108, 0.08);
+        border-color: rgba(244, 117, 108, 0.28);
+      }
+      .badge.warn {
+        color: var(--amber);
+        background: rgba(232, 163, 61, 0.08);
+        border-color: rgba(232, 163, 61, 0.3);
+      }
+      .badge.info {
+        color: var(--acc);
+        background: rgba(77, 159, 255, 0.08);
+        border-color: rgba(77, 159, 255, 0.3);
+      }
+
       .dim {
         color: var(--dim);
       }
@@ -266,15 +341,111 @@
       .nowrap {
         white-space: nowrap;
       }
-      .tag {
-        display: inline-block;
-        background: rgba(255, 123, 114, 0.12);
-        color: var(--red);
-        border: 1px solid rgba(255, 123, 114, 0.3);
-        border-radius: 99px;
-        padding: 1px 8px;
-        font-size: 11.5px;
+      .mono {
+        font-family: var(--mono);
       }
+      .hint {
+        font-size: 12px;
+        color: var(--dim);
+        font-weight: 400;
+      }
+      .tok {
+        cursor: pointer;
+        text-decoration: underline dotted;
+        text-underline-offset: 3px;
+        white-space: nowrap;
+        word-break: normal;
+      }
+      .tok:hover {
+        color: var(--acc);
+      }
+
+      /* ── 统计卡片 / 图表 ── */
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .statcard {
+        background: linear-gradient(180deg, var(--card2), var(--card));
+        border: 1px solid var(--bd);
+        border-radius: 14px;
+        padding: 14px 16px;
+      }
+      .statcard .v {
+        font-size: 27px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.5px;
+        line-height: 1.2;
+      }
+      .statcard .l {
+        font-size: 12px;
+        color: var(--dim);
+        margin-top: 2px;
+      }
+      .chart {
+        display: flex;
+        align-items: flex-end;
+        gap: 3px;
+        height: 130px;
+        margin-top: 4px;
+      }
+      .chart .col {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .chart .col:hover {
+        background: rgba(77, 159, 255, 0.1);
+      }
+      .chart .seg.ok {
+        background: linear-gradient(180deg, #5aa5ff, #3b82f6);
+      }
+      .chart .seg.bk {
+        background: var(--red);
+      }
+      .chart-x {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: var(--dim);
+        margin-top: 5px;
+        font-variant-numeric: tabular-nums;
+      }
+      .legend {
+        display: inline-flex;
+        gap: 14px;
+        font-size: 12px;
+        color: var(--dim);
+      }
+      .legend i {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 2px;
+        margin-right: 5px;
+      }
+      .barcell {
+        width: 30%;
+        min-width: 70px;
+      }
+      .bar {
+        height: 8px;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #3b82f6, #5aa5ff);
+        min-width: 2px;
+      }
+      .bar.red {
+        background: linear-gradient(90deg, #d95f57, var(--red));
+      }
+
       .grid2 {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -285,6 +456,8 @@
           grid-template-columns: 1fr;
         }
       }
+
+      /* ── 登录 ── */
       .center {
         display: flex;
         justify-content: center;
@@ -292,20 +465,32 @@
         min-height: 100vh;
       }
       #loginForm {
-        width: 320px;
+        width: 330px;
         display: flex;
         flex-direction: column;
         gap: 12px;
-        padding: 28px;
+        padding: 30px 28px;
       }
       #loginForm h2 {
-        margin: 0 0 6px;
+        margin: 0 0 8px;
         text-align: center;
         font-size: 18px;
       }
+      #loginForm h2::before {
+        content: "";
+        display: block;
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--acc);
+        box-shadow: 0 0 14px var(--acc);
+        margin: 0 auto 12px;
+      }
+
+      /* ── 设置 ── */
       .kv {
         display: grid;
-        grid-template-columns: 180px 1fr;
+        grid-template-columns: 190px 1fr;
         gap: 8px;
         align-items: center;
         margin-bottom: 8px;
@@ -316,32 +501,49 @@
           gap: 4px;
         }
       }
+      .kv > span:first-child {
+        color: var(--dim);
+        font-size: 13px;
+      }
       .kv input,
       .kv textarea {
         width: 100%;
       }
-      .hint {
-        font-size: 12px;
-        color: var(--dim);
-        font-weight: 400;
+
+      /* ── 通知 ── */
+      #toast {
+        position: fixed;
+        left: 50%;
+        bottom: 28px;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        z-index: 99;
+        pointer-events: none;
       }
-      .mono {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      .toastmsg {
+        background: #1a2433;
+        border: 1px solid var(--bd2);
+        border-left: 3px solid var(--green);
+        color: var(--fg);
+        padding: 9px 18px;
+        border-radius: 10px;
+        font-size: 13px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        animation: tin 0.2s ease-out;
+        transition: opacity 0.3s;
+        max-width: 80vw;
       }
-      .tok {
-        cursor: pointer;
-        text-decoration: underline dotted;
-        text-underline-offset: 3px;
+      .toastmsg.err {
+        border-left-color: var(--red);
       }
-      .tok:hover {
-        color: var(--acc);
-      }
-      .stat {
-        font-size: 26px;
-        font-weight: 700;
-        margin-right: 20px;
-        font-variant-numeric: tabular-nums;
-        letter-spacing: -0.5px;
+      @keyframes tin {
+        from {
+          opacity: 0;
+          translate: 0 8px;
+        }
       }
     </style>
   </head>
@@ -377,17 +579,23 @@
       <main>
         <section id="v-logs">
           <div class="card">
-            <div class="row">
+            <div class="row" id="logFilters">
               <select id="f_range">
                 <option value="today">今天</option>
                 <option value="all">全部</option>
               </select>
-              <input id="f_ip" placeholder="IP 包含…" size="14" />
+              <input id="f_ip" placeholder="IP 包含…" size="13" />
               <input id="f_status" placeholder="状态码(0=断连)" size="10" />
-              <input id="f_token" placeholder="Token 包含…" size="14" />
-              <input id="f_ua" placeholder="UA 包含…" size="14" />
-              <label><input type="checkbox" id="f_sub" /> 只看订阅请求</label>
+              <input id="f_token" placeholder="Token 包含…" size="13" />
+              <input id="f_ua" placeholder="UA 包含…" size="13" />
+              <label><input type="checkbox" id="f_sub" /> 只看订阅</label>
+              <label><input type="checkbox" id="f_block" /> 只看拦截</label>
               <button class="pri" id="logQuery">查询</button>
+              <button id="logReset">重置</button>
+              <span style="flex: 1"></span>
+              <label title="每10秒自动刷新"
+                ><input type="checkbox" id="f_auto" /> 自动刷新</label
+              >
               <button id="logExport">导出</button>
               <button id="logImportBtn">导入</button>
               <input
@@ -398,34 +606,62 @@
               />
               <button class="warn" id="logClean">清理旧日志</button>
             </div>
-            <table>
-              <thead>
-                <tr>
-                  <th>时间</th>
-                  <th>IP</th>
-                  <th>请求</th>
-                  <th>Token</th>
-                  <th>状态</th>
-                  <th>大小</th>
-                  <th>UA</th>
-                  <th>拦截</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody id="logRows"></tbody>
-            </table>
-            <div class="hint" id="logCount"></div>
+            <div class="tablewrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>时间</th>
+                    <th>IP</th>
+                    <th>请求</th>
+                    <th>Token</th>
+                    <th>状态</th>
+                    <th style="text-align: right">大小</th>
+                    <th>UA</th>
+                    <th>拦截原因</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="logRows"></tbody>
+              </table>
+            </div>
+            <div class="hint" id="logCount" style="margin-top: 8px"></div>
           </div>
         </section>
 
         <section id="v-analysis" class="hidden">
+          <div class="stats">
+            <div class="statcard">
+              <div class="v" id="aTotal">-</div>
+              <div class="l">今日请求</div>
+            </div>
+            <div class="statcard">
+              <div class="v red" id="aBlocked">-</div>
+              <div class="l">已拦截</div>
+            </div>
+            <div class="statcard">
+              <div class="v" id="aRate">-</div>
+              <div class="l">拦截率</div>
+            </div>
+            <div class="statcard">
+              <div class="v" id="aUniq">-</div>
+              <div class="l">独立IP</div>
+            </div>
+          </div>
           <div class="card">
-            <span class="stat" id="aTotal">-</span
-            ><span class="dim">今日请求</span>
-            <span class="stat red" id="aBlocked" style="margin-left: 32px"
-              >-</span
-            ><span class="dim">已拦截</span>
-            <button style="float: right" id="aRefresh">刷新</button>
+            <h3 style="display: flex; align-items: center; gap: 12px">
+              24小时流量
+              <span class="legend">
+                <span><i style="background: #4d9bff"></i>放行</span>
+                <span><i style="background: var(--red)"></i>拦截</span>
+              </span>
+              <span style="flex: 1"></span>
+              <button class="mini" id="aRefresh">刷新</button>
+            </h3>
+            <div class="chart" id="aChart"></div>
+            <div class="chart-x">
+              <span>0时</span><span>6时</span><span>12时</span><span>18时</span
+              ><span>23时</span>
+            </div>
           </div>
           <div class="grid2">
             <div class="card">
@@ -434,7 +670,8 @@
                 <thead>
                   <tr>
                     <th>IP</th>
-                    <th>请求数</th>
+                    <th class="barcell"></th>
+                    <th style="text-align: right">请求数</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -447,7 +684,8 @@
                 <thead>
                   <tr>
                     <th>Token</th>
-                    <th>请求数</th>
+                    <th class="barcell"></th>
+                    <th style="text-align: right">请求数</th>
                   </tr>
                 </thead>
                 <tbody id="aTopToken"></tbody>
@@ -459,7 +697,8 @@
                 <thead>
                   <tr>
                     <th>UA</th>
-                    <th>次数</th>
+                    <th class="barcell"></th>
+                    <th style="text-align: right">次数</th>
                   </tr>
                 </thead>
                 <tbody id="aSuspUA"></tbody>
@@ -471,8 +710,8 @@
                 <thead>
                   <tr>
                     <th>Token</th>
-                    <th>IP数</th>
-                    <th>请求数</th>
+                    <th style="text-align: right">IP数</th>
+                    <th style="text-align: right">请求数</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -485,8 +724,8 @@
                 <thead>
                   <tr>
                     <th>IP</th>
-                    <th>Token数</th>
-                    <th>请求数</th>
+                    <th style="text-align: right">Token数</th>
+                    <th style="text-align: right">请求数</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -613,7 +852,7 @@
                 </thead>
                 <tbody id="ubRows"></tbody>
               </table>
-              <div class="hint">
+              <div class="hint" style="margin-top: 8px">
                 内置规则始终生效：空UA、curl、wget、python、go-http-client、java、libcurl、axios、node-fetch、scrapy、aiohttp
               </div>
             </div>
@@ -771,9 +1010,9 @@
               <thead>
                 <tr>
                   <th>厂商</th>
-                  <th>网段数</th>
+                  <th style="text-align: right">网段数</th>
                   <th>更新时间</th>
-                  <th>错误</th>
+                  <th>状态</th>
                 </tr>
               </thead>
               <tbody id="cloudRows"></tbody>
@@ -787,6 +1026,7 @@
         </section>
       </main>
     </div>
+    <div id="toast"></div>
 
     <script>
       const $ = (s) => document.querySelector(s);
@@ -801,8 +1041,48 @@
         return el;
       };
       const fill = (sel, rows) => $(sel).replaceChildren(...rows);
+      /* 空表提示 */
+      const fillT = (sel, rows, cols) =>
+        fill(
+          sel,
+          rows.length
+            ? rows
+            : [
+                h(
+                  "tr",
+                  null,
+                  h(
+                    "td",
+                    { class: "empty-td", colspan: String(cols) },
+                    "暂无数据",
+                  ),
+                ),
+              ],
+        );
       const fmtTime = (t) =>
         new Date(t).toLocaleString("zh-CN", { hour12: false });
+      /* 今天的记录只显示时刻，更紧凑 */
+      const fmtTS = (t) => {
+        const d = new Date(t);
+        return d.toDateString() === new Date().toDateString()
+          ? d.toLocaleTimeString("zh-CN", { hour12: false })
+          : d.toLocaleString("zh-CN", { hour12: false });
+      };
+      const fmtBytes = (n) =>
+        n < 1024
+          ? n + " B"
+          : n < 1048576
+            ? (n / 1024).toFixed(1) + " KB"
+            : (n / 1048576).toFixed(2) + " MB";
+
+      function toast(msg, err) {
+        const el = h("div", { class: "toastmsg" + (err ? " err" : "") }, msg);
+        $("#toast").append(el);
+        setTimeout(() => {
+          el.style.opacity = 0;
+          setTimeout(() => el.remove(), 350);
+        }, 2600);
+      }
 
       async function api(path, body, raw) {
         const opt = { method: body !== undefined ? "POST" : "GET" };
@@ -819,7 +1099,7 @@
         }
         const d = await r.json().catch(() => ({}));
         if (!r.ok) {
-          alert(d.error || "请求失败 " + r.status);
+          toast(d.error || "请求失败 " + r.status, true);
           throw new Error(d.error || r.status);
         }
         return d;
@@ -869,6 +1149,7 @@
         })[b.dataset.view]();
       });
 
+      /* Token 显示截短，点击复制完整值 */
       const tokSpan = (t) =>
         h(
           "span",
@@ -876,12 +1157,35 @@
             class: "tok mono",
             "data-act": "copy",
             "data-token": t,
-            title: "点击复制",
+            title: t + "（点击复制）",
           },
-          t,
+          t.length > 16 ? t.slice(0, 8) + "…" + t.slice(-4) : t,
         );
       const banBtn = (ip, label) =>
-        h("button", { "data-act": "ban", "data-ip": ip }, label || "封禁");
+        h(
+          "button",
+          { class: "mini warn", "data-act": "ban", "data-ip": ip },
+          label || "封禁",
+        );
+      const stBadge = (e) =>
+        e.status === 0
+          ? h("span", { class: "badge drop" }, "断连")
+          : h(
+              "span",
+              { class: "badge " + (e.status < 400 ? "ok" : "warn") },
+              String(e.status),
+            );
+      /* 数值 + 比例条，一眼看出量级 */
+      const numTd = (n) => h("td", { class: "num" }, String(n));
+      const barTd = (n, max, red) =>
+        h(
+          "td",
+          { class: "barcell" },
+          h("div", {
+            class: "bar" + (red ? " red" : ""),
+            style: "width:" + (max ? Math.max(2, (n / max) * 100) : 0) + "%",
+          }),
+        );
 
       /* ── 日志 ── */
       async function loadLogs() {
@@ -895,32 +1199,57 @@
           limit: 500,
         });
         const d = await api("logs?" + p);
-        fill(
+        let entries = d.entries || [];
+        if ($("#f_block").checked) entries = entries.filter((e) => e.block);
+        fillT(
           "#logRows",
-          (d.entries || []).map((e) =>
+          entries.map((e) =>
             h(
               "tr",
               null,
-              h("td", { class: "dim nowrap" }, fmtTime(e.ts)),
+              h("td", { class: "dim nowrap mono" }, fmtTS(e.ts)),
               h("td", { class: "mono" }, e.ip),
               h("td", { class: "mono" }, e.method + " " + e.path),
               h("td", null, e.token ? tokSpan(e.token) : ""),
+              h("td", null, stBadge(e)),
+              h("td", { class: "num dim" }, fmtBytes(e.bytes)),
+              h("td", { class: "ua dim", title: e.ua }, e.ua),
               h(
                 "td",
-                { class: e.block ? "red" : "" },
-                e.status === 0 ? "断连" : String(e.status),
+                null,
+                e.block ? h("span", { class: "badge drop" }, e.block) : "",
               ),
-              h("td", { class: "dim" }, String(e.bytes)),
-              h("td", { class: "dim" }, e.ua),
-              h("td", { class: "red" }, e.block || ""),
-              h("td", null, banBtn(e.ip, "封禁IP")),
+              h("td", null, banBtn(e.ip)),
             ),
           ),
+          9,
         );
         $("#logCount").textContent =
-          `共 ${d.entries?.length || 0} 条（最新在前，最多500条）`;
+          `共 ${entries.length} 条（最新在前，最多500条）`;
       }
       $("#logQuery").onclick = loadLogs;
+      $("#logReset").onclick = () => {
+        for (const id of ["f_ip", "f_status", "f_token", "f_ua"])
+          $("#" + id).value = "";
+        $("#f_sub").checked = $("#f_block").checked = false;
+        loadLogs();
+      };
+      /* 回车即查询 */
+      $("#logFilters").addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && e.target.matches("input")) {
+          e.preventDefault();
+          loadLogs();
+        }
+      });
+      /* 自动刷新（勾选后每10秒） */
+      setInterval(() => {
+        if (
+          $("#f_auto").checked &&
+          !$("#v-logs").classList.contains("hidden") &&
+          !$("#app").classList.contains("hidden")
+        )
+          loadLogs();
+      }, 10000);
       $("#logExport").onclick = () =>
         (location = "api/logs/export?range=" + $("#f_range").value);
       $("#logImportBtn").onclick = () => $("#logFile").click();
@@ -928,7 +1257,7 @@
         const f = e.target.files[0];
         if (!f) return;
         const d = await api("logs/import", await f.text(), true);
-        alert(`导入完成，新增 ${d.added} 条（已去重排序）`);
+        toast(`导入完成，新增 ${d.added} 条（已去重排序）`);
         e.target.value = "";
         loadLogs();
       };
@@ -936,7 +1265,7 @@
         const v = prompt("清理多少天前的日志？", "30");
         if (!v) return;
         const d = await api("logs/cleanup", { days: +v });
-        alert(`已删除 ${d.removed} 个日志文件`);
+        toast(`已删除 ${d.removed} 个日志文件`);
         loadLogs();
       };
 
@@ -945,73 +1274,114 @@
         const d = await api("analysis");
         $("#aTotal").textContent = d.total;
         $("#aBlocked").textContent = d.blocked;
+        $("#aRate").textContent = d.total
+          ? ((d.blocked / d.total) * 100).toFixed(1) + "%"
+          : "0%";
+        $("#aUniq").textContent = d.uniq_ips ?? "-";
+        const hours = d.hourly || [];
+        const hmax = Math.max(1, ...hours.map((x) => x.total));
         fill(
+          "#aChart",
+          hours.map((x, i) =>
+            h(
+              "div",
+              {
+                class: "col",
+                title: `${i}:00–${i + 1}:00\n请求 ${x.total} · 拦截 ${x.blocked}`,
+              },
+              h("div", {
+                class: "seg bk",
+                style: `height:${(x.blocked / hmax) * 100}%`,
+              }),
+              h("div", {
+                class: "seg ok",
+                style: `height:${((x.total - x.blocked) / hmax) * 100}%`,
+              }),
+            ),
+          ),
+        );
+        const ipMax = d.top_ips?.[0]?.count || 0;
+        fillT(
           "#aTopIP",
           (d.top_ips || []).map((x) =>
             h(
               "tr",
               null,
               h("td", { class: "mono" }, x.key),
-              h("td", null, String(x.count)),
+              barTd(x.count, ipMax),
+              numTd(x.count),
               h("td", null, banBtn(x.key)),
             ),
           ),
+          4,
         );
-        fill(
+        const tkMax = d.top_tokens?.[0]?.count || 0;
+        fillT(
           "#aTopToken",
           (d.top_tokens || []).map((x) =>
             h(
               "tr",
               null,
               h("td", null, tokSpan(x.key)),
-              h("td", null, String(x.count)),
+              barTd(x.count, tkMax),
+              numTd(x.count),
             ),
           ),
+          3,
         );
-        fill(
+        const uaMax = d.susp_ua?.[0]?.count || 0;
+        fillT(
           "#aSuspUA",
           (d.susp_ua || []).map((x) =>
             h(
               "tr",
               null,
-              h("td", null, x.key || h("span", { class: "dim" }, "(空UA)")),
-              h("td", null, String(x.count)),
+              h(
+                "td",
+                { class: "ua", title: x.key },
+                x.key || h("span", { class: "dim" }, "(空UA)"),
+              ),
+              barTd(x.count, uaMax, true),
+              numTd(x.count),
             ),
           ),
+          3,
         );
-        fill(
+        fillT(
           "#aSuspToken",
           (d.susp_tokens || []).map((x) =>
             h(
               "tr",
               null,
               h("td", null, tokSpan(x.token)),
-              h("td", null, String(x.ip_count)),
-              h("td", null, String(x.reqs)),
+              numTd(x.ip_count),
+              numTd(x.reqs),
               h(
                 "td",
                 null,
                 h(
                   "button",
-                  { "data-act": "blt", "data-token": x.token },
+                  { class: "mini", "data-act": "blt", "data-token": x.token },
                   "加入Token黑名单",
                 ),
               ),
             ),
           ),
+          4,
         );
-        fill(
+        fillT(
           "#aSuspIP",
           (d.susp_ips || []).map((x) =>
             h(
               "tr",
               null,
               h("td", { class: "mono" }, x.ip),
-              h("td", null, String(x.token_count)),
-              h("td", null, String(x.reqs)),
+              numTd(x.token_count),
+              numTd(x.reqs),
               h("td", null, banBtn(x.ip)),
             ),
           ),
+          4,
         );
       }
       $("#aRefresh").onclick = loadAnalysis;
@@ -1023,14 +1393,14 @@
           h(
             "button",
             {
-              class: "warn",
+              class: "mini warn",
               "data-act": "del",
               "data-list": list,
               "data-value": v,
             },
             "删除",
           );
-        fill(
+        fillT(
           "#wlRows",
           (d.ip_whitelist || []).map((x) =>
             h(
@@ -1041,8 +1411,9 @@
               h("td", null, delBtn("ip_whitelist", x.value)),
             ),
           ),
+          3,
         );
-        fill(
+        fillT(
           "#blRows",
           (d.ip_blacklist || []).map((x) =>
             h(
@@ -1053,13 +1424,14 @@
               h(
                 "td",
                 null,
-                x.cloud ? h("span", { class: "tag" }, x.cloud) : "",
+                x.cloud ? h("span", { class: "badge info" }, x.cloud) : "",
               ),
               h("td", null, delBtn("ip_blacklist", x.value)),
             ),
           ),
+          4,
         );
-        fill(
+        fillT(
           "#ubRows",
           (d.ua_ban || []).map((x) =>
             h(
@@ -1070,8 +1442,9 @@
               h("td", null, delBtn("ua_ban", x.value)),
             ),
           ),
+          3,
         );
-        fill(
+        fillT(
           "#uaRows",
           (d.ua_allow || []).map((x) =>
             h(
@@ -1082,8 +1455,9 @@
               h("td", null, delBtn("ua_allow", x.value)),
             ),
           ),
+          3,
         );
-        fill(
+        fillT(
           "#tkRows",
           (d.token_blacklist || []).map((x) =>
             h(
@@ -1101,6 +1475,7 @@
               h("td", null, delBtn("token_blacklist", x.value)),
             ),
           ),
+          4,
         );
       }
 
@@ -1120,6 +1495,7 @@
             remark: r.value,
           });
           v.value = r.value = "";
+          toast("已添加，立即生效");
           loadLists();
         } else if (b.dataset.implist) {
           const t = $("#" + b.dataset.t);
@@ -1128,7 +1504,7 @@
             list: b.dataset.implist,
             text: t.value,
           });
-          alert(`导入 ${d.added} 条，跳过 ${d.skipped} 条`);
+          toast(`导入 ${d.added} 条，跳过 ${d.skipped} 条`);
           t.value = "";
           loadLists();
         } else if (b.dataset.export) {
@@ -1139,6 +1515,7 @@
             list: b.dataset.list,
             value: b.dataset.value,
           });
+          toast("已删除");
           loadLists();
         } else if (b.dataset.act === "ban") {
           if (!confirm(`封禁 IP ${b.dataset.ip} ?`)) return;
@@ -1147,18 +1524,18 @@
             value: b.dataset.ip,
             remark: "手动封禁 " + new Date().toLocaleDateString("zh-CN"),
           });
-          alert("已封禁，立即生效");
+          toast(`已封禁 ${b.dataset.ip}，立即生效`);
         } else if (b.dataset.act === "blt") {
           await api("lists/add", {
             list: "token_blacklist",
             value: b.dataset.token,
             remark: "可疑Token " + new Date().toLocaleDateString("zh-CN"),
           });
-          alert("已加入Token黑名单（仅监控，不拦截）");
+          toast("已加入Token黑名单（仅监控，不拦截）");
         } else if (b.dataset.act === "copy") {
           try {
             await navigator.clipboard.writeText(b.dataset.token);
-            alert("已复制");
+            toast("已复制");
           } catch {
             prompt("复制Token：", b.dataset.token);
           }
@@ -1204,11 +1581,9 @@
           cert_domain: $("#s_cert").value,
           asn_url_template: $("#s_asn").value,
         });
-        alert(
-          d.restart_needed
-            ? "已保存。监听地址有改动，需重启进程才生效！"
-            : "已保存，立即生效",
-        );
+        d.restart_needed
+          ? toast("已保存。监听地址有改动，需重启进程才生效！", true)
+          : toast("已保存，立即生效");
         loadMeta();
       };
       $("#savePass").onclick = async () => {
@@ -1222,14 +1597,14 @@
 
       async function loadCloud() {
         const d = await api("cloudips");
-        fill(
+        fillT(
           "#cloudRows",
           (d.providers || []).map((p) =>
             h(
               "tr",
               null,
               h("td", null, p.name),
-              h("td", null, String(p.count)),
+              numTd(p.count),
               h(
                 "td",
                 { class: "dim" },
@@ -1237,9 +1612,18 @@
                   ? fmtTime(p.fetched)
                   : "未获取",
               ),
-              h("td", { class: "red" }, p.err || ""),
+              h(
+                "td",
+                null,
+                p.err
+                  ? h("span", { class: "badge drop", title: p.err }, "失败")
+                  : p.count
+                    ? h("span", { class: "badge ok" }, "正常")
+                    : "",
+              ),
             ),
           ),
+          4,
         );
       }
       $("#cloudRefresh").onclick = async (e) => {
@@ -1248,6 +1632,7 @@
         try {
           await api("cloudips/refresh", {});
           await loadCloud();
+          toast("云IP库已刷新");
         } finally {
           e.target.disabled = false;
           e.target.textContent = "立即刷新";

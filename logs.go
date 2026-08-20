@@ -248,14 +248,21 @@ type SuspIP struct {
 	Reqs       int    `json:"reqs"`
 }
 
+type HourBucket struct {
+	Total   int `json:"total"`
+	Blocked int `json:"blocked"`
+}
+
 type Analysis struct {
-	Total      int         `json:"total"`
-	Blocked    int         `json:"blocked"`
-	TopIPs     []KV        `json:"top_ips"`
-	TopTokens  []KV        `json:"top_tokens"`
-	SuspUA     []KV        `json:"susp_ua"`
-	SuspTokens []SuspToken `json:"susp_tokens"`
-	SuspIPs    []SuspIP    `json:"susp_ips"`
+	Total      int            `json:"total"`
+	Blocked    int            `json:"blocked"`
+	UniqIPs    int            `json:"uniq_ips"`
+	Hourly     [24]HourBucket `json:"hourly"`
+	TopIPs     []KV           `json:"top_ips"`
+	TopTokens  []KV           `json:"top_tokens"`
+	SuspUA     []KV           `json:"susp_ua"`
+	SuspTokens []SuspToken    `json:"susp_tokens"`
+	SuspIPs    []SuspIP       `json:"susp_ips"`
 }
 
 func topKV(m map[string]int, n int) []KV {
@@ -286,8 +293,11 @@ func (l *Logger) AnalyzeToday(tokenBL map[string]bool, tokenIPThresh, ipTokenThr
 	forEachEntry(l.files("today"), func(e LogEntry) {
 		a.Total++
 		ipc[e.IP]++
+		h := &a.Hourly[e.TS.Local().Hour()]
+		h.Total++
 		if e.Block != "" {
 			a.Blocked++
+			h.Blocked++
 			bua[e.UA]++
 		}
 		if e.Token == "" || tokenBL[e.Token] {
@@ -303,6 +313,7 @@ func (l *Logger) AnalyzeToday(tokenBL map[string]bool, tokenIPThresh, ipTokenThr
 		}
 		ipToks[e.IP][e.Token] = true
 	})
+	a.UniqIPs = len(ipc)
 	a.TopIPs = topKV(ipc, 20)
 	a.TopTokens = topKV(tkc, 20)
 	a.SuspUA = topKV(bua, 20)
